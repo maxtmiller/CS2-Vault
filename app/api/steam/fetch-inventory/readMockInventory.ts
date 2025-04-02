@@ -1,7 +1,7 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 
-export async function readMockInventory() {
+export async function readInventory() {
   const filePath = path.join(process.cwd(), './public/full_inventory_data.json'); // Adjust path if needed
   try {
     await fs.access(filePath);
