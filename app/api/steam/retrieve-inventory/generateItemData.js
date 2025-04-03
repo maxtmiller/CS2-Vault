@@ -4,6 +4,7 @@ import fs from 'fs';
 import CRC32 from 'crc-32';
 import protobuf from 'protobufjs';
 import path from 'path';
+import { getItemData, getPriceData, getSkinData } from '@/lib/data-loader'
 
 
 function findFloatRange(float) {
@@ -44,9 +45,27 @@ function findFloatRange(float) {
     return null;
 }
 
-const full_item_data = JSON.parse(fs.readFileSync('public/item_data.json', 'utf8'));
-const full_price_data = JSON.parse(fs.readFileSync('public/price_data.json', 'utf8'));
-const full_skin_data = JSON.parse(fs.readFileSync('public/skins_data.json', 'utf8'));
+// const full_item_data = JSON.parse(fs.readFileSync('public/item_data.json', 'utf8'));
+// const full_price_data = JSON.parse(fs.readFileSync('public/price_data.json', 'utf8'));
+// const full_skin_data = JSON.parse(fs.readFileSync('public/skins_data.json', 'utf8'));
+
+// const full_item_data = getItemData()
+// const full_price_data = getPriceData()
+// const full_skin_data = getSkinData()
+
+let full_item_data;
+let full_price_data;
+let full_skin_data;
+
+async function fetchDataOnce() {
+    [full_item_data, full_price_data, full_skin_data] = await Promise.all([
+        getItemData(),
+        getPriceData(),
+        getSkinData(),
+    ]);
+}
+  
+fetchDataOnce();
 
 
 async function generateInspectLinkFromObject(props) {
@@ -78,7 +97,8 @@ async function generateInspectLinkFromObject(props) {
             })),
         };
 
-        const root = await protobuf.load('public/econ.proto');
+        const filePath = path.join(process.cwd(), 'public/econ.proto');
+        const root = await protobuf.load(filePath);
         const CEconItemPreviewDataBlock = root.lookupType('CEconItemPreviewDataBlock');
 
         const errMsg = CEconItemPreviewDataBlock.verify(econ);
@@ -448,7 +468,7 @@ export async function initializeCSGOInventory(authData, loginType) {
                     mergedData = await appendInfo(mergedData);
 
                     const rootFolder = process.cwd();
-                    const filePath = path.join(rootFolder, 'temp/full_inventory_data.json');
+                    const filePath = path.join(rootFolder, `temp/full_inventory_data-${steamID}.json`);
 
                     fs.writeFileSync(filePath, mergedData, 'utf-8');
 

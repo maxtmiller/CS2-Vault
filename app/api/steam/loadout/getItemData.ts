@@ -3,6 +3,8 @@ import path from 'path';
 import protobuf from 'protobufjs';
 import CRC32 from 'crc-32';
 import type { ResponseData } from './route'
+import { getItemData, getPriceData, getSkinData } from '@/lib/data-loader'
+
 
 interface FloatRange {
     min: number;
@@ -64,6 +66,18 @@ interface Sticker {
     rotation?: number;
 }
 
+let full_price_data: PriceData;
+let full_skin_data: SkinData;
+
+async function fetchDataOnce() {
+    [full_price_data, full_skin_data] = await Promise.all([
+      getPriceData(),
+      getSkinData(),
+    ]);
+}
+  
+fetchDataOnce();
+
 async function generateInspectLinkFromObject(props: ItemData): Promise<string | null> {
     const previewLink = "steam://rungame/730/76561202255233023/+csgo_econ_action_preview%20";
 
@@ -92,7 +106,8 @@ async function generateInspectLinkFromObject(props: ItemData): Promise<string | 
             // })),
         };
 
-        const root = await protobuf.load('./public/econ.proto');
+        const filePath = path.join(process.cwd(), 'public/econ.proto');
+        const root = await protobuf.load(filePath);
         const CEconItemPreviewDataBlock = root.lookupType('CEconItemPreviewDataBlock');
 
         const errMsg = CEconItemPreviewDataBlock.verify(econ);
@@ -162,16 +177,17 @@ export async function getSuggestionItemInfo(
     items: ResponseData,
 ): Promise<ItemData | null> {
 
-    const skinsDatafilePath = path.join(process.cwd(), './public/skins_data.json'); // Adjust path if needed
-    const skinsDatafileContents = await fs.readFile(skinsDatafilePath, 'utf-8');
-    const skinsData = JSON.parse(skinsDatafileContents);
+    // const skinsDatafilePath = path.join(process.cwd(), './public/skins_data.json'); // Adjust path if needed
+    // const skinsDatafileContents = await fs.readFile(skinsDatafilePath, 'utf-8');
+    // const skinsData = JSON.parse(skinsDatafileContents);
 
-    const priceDatafilePath = path.join(process.cwd(), './public/price_data.json'); // Adjust path if needed
-    const priceDatafileContents = await fs.readFile(priceDatafilePath, 'utf-8');
-    const priceData = JSON.parse(priceDatafileContents);
+    // const priceDatafilePath = path.join(process.cwd(), './public/price_data.json'); // Adjust path if needed
+    // const priceDatafileContents = await fs.readFile(priceDatafilePath, 'utf-8');
+    // const priceData = JSON.parse(priceDatafileContents);
 
-    const full_skin_data: { [key: string]: SkinData } = skinsData;
-    const full_price_data: PriceData = priceData;
+    // const full_skin_data: { [key: string]: SkinData } = skinsData;
+    // const full_price_data: PriceData = priceData;
+
 
     const item = Object.values(full_skin_data).find(item => item.name === items.name);
 

@@ -48,7 +48,7 @@ export function UserProfile({ steamId }: { steamId: string }) {
   }, [steamId])
 
   const handleLogout = () => {
-    fetch("/api/auth/logout", { method: "POST" })
+    fetch(`/api/auth/logout?steamid=${steamId}`, { method: "POST" })
       .then(() => {
         window.location.replace("/")
       })

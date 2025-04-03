@@ -2,11 +2,11 @@ import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { InventoryItem } from "@/lib/steam-api"
 
-export async function fetchInventoryFromJSON(): Promise<InventoryItem[]> {
+export async function fetchInventoryFromJSON(steamId: string): Promise<InventoryItem[]> {
   console.log("Fetching inventory from mock data...");
 
   try {
-    const response = await fetch(`/api/steam/fetch-inventory`);
+    const response = await fetch(`/api/steam/fetch-inventory?steamid=${steamId}`);
 
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`);

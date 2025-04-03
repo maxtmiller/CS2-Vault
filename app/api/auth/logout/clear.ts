@@ -1,10 +1,10 @@
 import fs from 'fs'
 import path from 'path'
 
-export async function deleteInventoryData() {
+export async function deleteInventoryData(steamId: string) {
 
     const rootFolder = process.cwd();
-    const filePath = path.join(rootFolder, 'temp/full_inventory_data.json');
+    const filePath = path.join(rootFolder, `temp/full_inventory_data-${steamId}.json`);
     const data = fs.readFileSync(filePath, 'utf-8');
 
     if (fs.existsSync(filePath)) {

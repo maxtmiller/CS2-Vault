@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 dotenv.config();
 import { CohereClientV2 } from 'cohere-ai';
 
-const apiKey: string | undefined = "qsEU5DQji0kQjhxtx7miezkQPOS7S2cbuwuZgrc7";
+const apiKey: string | undefined = process.env.COHERE_API_KEY;
 
 if (!apiKey) {
     throw new Error("COHERE_API_KEY is not defined in the environment variables.");

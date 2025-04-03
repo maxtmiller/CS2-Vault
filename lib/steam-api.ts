@@ -51,7 +51,7 @@ export async function fetchInventory(steamId: string): Promise<InventoryItem[]> 
   console.log(`Fetching inventory for Steam ID: ${steamId}`)
 
   // try {
-  //   const file_data = await fetchInventoryFromJSON();
+  //   const file_data = await fetchInventoryFromJSON(steamId);
   //   if (!(Array.isArray(file_data) && file_data.length === 0)) {
   //     return file_data;
   //   }

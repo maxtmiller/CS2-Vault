@@ -109,7 +109,8 @@ async function generateInspectLinkFromObject(props: InspectItem): Promise<string
             })),
         };
   
-        const root = await protobuf.load('./public/econ.proto');
+        const filePath = path.join(process.cwd(), 'public/econ.proto');
+        const root = await protobuf.load(filePath);
         const CEconItemPreviewDataBlock = root.lookupType('CEconItemPreviewDataBlock');
   
         const errMsg = CEconItemPreviewDataBlock.verify(econ);
@@ -535,7 +536,7 @@ export async function processInventoryData(data: any, steamId: string): Promise<
 
     try {
         const rootFolder = process.cwd();
-        const filePath = path.join(rootFolder, 'temp/full_inventory_data.json');
+        const filePath = path.join(rootFolder, `temp/full_inventory_data-${steamId}.json`);
         fs.writeFileSync(filePath, JSON.stringify(mergedData, null, 2), 'utf-8');
         console.log('File written successfully');
     } catch (error) {
