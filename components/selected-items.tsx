@@ -462,15 +462,6 @@ interface SelectedItemsProps {
           </ScrollArea>
         </div>
       )}
-
-      {/* {jsonResult && (
-        <div className="mt-4">
-          <h3 className="text-sm font-medium mb-2">JSON Result:</h3>
-          <div className="bg-gray-900 p-3 rounded-md overflow-auto max-h-[200px]">
-            <pre className="text-xs text-gray-300">{jsonResult}</pre>
-          </div>
-        </div>
-      )} */}
     </div>
   )
 }

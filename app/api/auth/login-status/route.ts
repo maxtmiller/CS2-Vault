@@ -14,6 +14,10 @@ authEmitter.on("authenticated", (data) => {
   }
 })
 
+function delay(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Check if we have a recent auth event (within the last 10 seconds)
@@ -24,12 +28,16 @@ export async function GET(request: NextRequest) {
       const authData = lastAuthEvent.data
       lastAuthEvent = null
 
+      console.log("line 27: ", authData)
+
       return NextResponse.json({
         loggedIn: true,
         responseStatus: "loggedIn",
         session: authData,
       })
     }
+
+    console.log("line 34: ", session)
 
     // Check if we have an active session from the QR login
     if (session && session.accessToken) {
@@ -52,33 +60,37 @@ export async function GET(request: NextRequest) {
         // If validation fails, continue to cookie check
       }
     }
-
     // Check if we have a session cookie as fallback
-    const cookieStore = await cookies()
-    const sessionCookie = cookieStore.get("steam_session")
+    // const cookieStore = await cookies()
+    // const sessionCookie = cookieStore.get("steam_session")
 
-    if (sessionCookie) {
-      try {
-        const sessionData = JSON.parse(sessionCookie.value)
+    // console.log("line 67: ", sessionCookie)
 
-        // Check if the session is expired
-        if (sessionData.expiresAt && sessionData.expiresAt < Date.now()) {
-          // Session expired, clear the cookie
-          cookieStore.delete("steam_session")
-          return NextResponse.json({ loggedIn: false, reason: "expired" })
-        }
+    // if (sessionCookie && sessionCookie.value !== "true") {
+    //   try {
+    //     const sessionData = JSON.parse(sessionCookie.value)
+    //     console.log("line 63:", sessionData)
+    //     console.log(sessionCookie)
+    //     console.log(cookieStore.get("steam_session"))
 
-        return NextResponse.json({
-          loggedIn: true,
-          responseStatus: "loggedIn",
-          session: sessionData,
-        })
-      } catch (error) {
-        console.error("Error parsing session cookie:", error)
-        // Invalid cookie, clear it
-        cookieStore.delete("steam_session")
-      }
-    }
+    //     // Check if the session is expired
+    //     if (sessionData.expiresAt && sessionData.expiresAt < Date.now()) {
+    //       // Session expired, clear the cookie
+    //       cookieStore.delete("steam_session")
+    //       return NextResponse.json({ loggedIn: false, reason: "expired" })
+    //     }
+
+    //     return NextResponse.json({
+    //       loggedIn: true,
+    //       responseStatus: "loggedIn",
+    //       session: sessionData,
+    //     })
+    //   } catch (error) {
+    //     console.error("Error parsing session cookie:", error)
+    //     // Invalid cookie, clear it
+    //     cookieStore.delete("steam_session")
+    //   }
+    // }
 
     // No active session found
     return NextResponse.json({ loggedIn: false })

@@ -13,8 +13,16 @@ export async function POST(request: NextRequest) {
     if (loginType !== 1) {
       auth = JSON.parse(authData);
     } else {
-      auth = authData;
+      auth = authData.session
     }
+
+    // console.log("Retrieve Inventory API:")
+    // console.log(auth); // Ensure auth is defined
+    // console.log(typeof auth); // Should be 'object'
+    // console.log(Object.keys(auth)); // Check available keys
+    // // console.log(typeof authData)
+    // // console.log(authData.refreshToken)
+    // // console.log(auth.refreshToken)
 
     const result = await initializeCSGOInventory(auth, loginType);
 

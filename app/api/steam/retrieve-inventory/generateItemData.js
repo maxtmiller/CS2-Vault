@@ -372,6 +372,7 @@ export async function initializeCSGOInventory(authData, loginType) {
             console.log('Connected to CS2 Game Coordinator.');
 
             if (csgo.inventory) {
+                console.log('Inside Inventory.');
                 try {
                     const cleanedInventory = csgo.inventory
                         .filter(item => !item.casket_id)

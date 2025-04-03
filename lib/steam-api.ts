@@ -50,34 +50,6 @@ export interface InventoryItem {
 export async function fetchInventory(steamId: string): Promise<InventoryItem[]> {
   console.log(`Fetching inventory for Steam ID: ${steamId}`)
 
-  document.cookie = "steam_session"
-  console.log(document.cookie)
-
-  // Check if we have cached inventory data from login
-  try {
-    const cachedInventoryString = localStorage.getItem("cs2_inventory_data")
-    console.log(cachedInventoryString)
-    if (cachedInventoryString) {
-      const cachedInventory = JSON.parse(cachedInventoryString)
-
-      // Check if the cached data is for the current user and is recent (less than 5 minutes old)
-      const isFresh = Date.now() - cachedInventory.timestamp < 5 * 60 * 1000 // 5 minutes
-      const isCurrentUser = cachedInventory.steamID === steamId
-
-      if (isCurrentUser && isFresh && Array.isArray(cachedInventory.data)) {
-        console.log("Using cached inventory data from login")
-
-        // Clear the cache after using it to ensure fresh data on next load
-        localStorage.removeItem("cs2_inventory_data")
-
-        return cachedInventory.data
-      }
-    }
-  } catch (error) {
-    console.error("Error reading cached inventory data:", error)
-    // Continue with normal fetch if cache reading fails
-  }
-
   try {
     const file_data = await fetchInventoryFromJSON();
     if (!(Array.isArray(file_data) && file_data.length === 0)) {
@@ -94,8 +66,8 @@ export async function fetchInventory(steamId: string): Promise<InventoryItem[]> 
     const result = data.processedData
 
     return result
-  } catch (error) {
-    console.error("Error fetching inventory:", error)
+  } catch {
+    console.error("Error fetching inventory:")
     return getMockInventoryItems()
   }
 }

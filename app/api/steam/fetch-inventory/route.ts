@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { readInventory } from './readMockInventory';  // Import your function here
+import { readInventory } from './readInventory';  // Import your function here
 
 export async function GET() {
   try {

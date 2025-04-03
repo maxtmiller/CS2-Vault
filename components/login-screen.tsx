@@ -63,7 +63,7 @@ export function LoginScreen() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ authData: authData, loginType: 1 }),
+        body: JSON.stringify({ authData: data, loginType: 1 }),
       })
 
       if (response.ok) {
@@ -282,7 +282,7 @@ export function LoginScreen() {
           <CardDescription className="text-gray-400">Choose your preferred login method</CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="qr" className="w-full">
+          <Tabs defaultValue="jwt" className="w-full">
             <TabsList className="grid w-full grid-cols-3 bg-gray-700">
               <TabsTrigger value="steam" className="data-[state=active]:bg-gray-900">
                 Steam

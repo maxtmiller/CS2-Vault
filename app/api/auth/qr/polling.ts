@@ -28,20 +28,12 @@ export async function flowLoginRegularQR() {
           expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
         }),
         {
-          httpOnly: true, 
           secure: process.env.NODE_ENV === "production",
           sameSite: "lax",
           maxAge: 24 * 60 * 60, // 24 hours
           path: "/",
         },
       )
-
-      cookieStore.set("refreshToken", session.refreshToken, {
-        httpOnly: true,  // Cannot be accessed by JavaScript
-        secure: process.env.NODE_ENV === "production",  // Only over HTTPS in production
-        sameSite: "Strict",  // Prevents cross-site request forgery
-        maxAge: 60 * 60 * 24 * 7,  // Expires after 1 week
-      });
 
       // Emit the authenticated event to the global emitter
       authEmitter.emit("authenticated", {
