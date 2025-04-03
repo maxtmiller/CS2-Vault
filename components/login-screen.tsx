@@ -282,17 +282,17 @@ export function LoginScreen() {
           <CardDescription className="text-gray-400">Choose your preferred login method</CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="jwt" className="w-full">
+          <Tabs defaultValue="steam" className="w-full">
             <TabsList className="grid w-full grid-cols-3 bg-gray-700">
               <TabsTrigger value="steam" className="data-[state=active]:bg-gray-900">
                 Steam
               </TabsTrigger>
-              <TabsTrigger value="qr" className="data-[state=active]:bg-gray-900">
+              {/* <TabsTrigger value="qr" className="data-[state=active]:bg-gray-900">
                 QR Code
               </TabsTrigger>
               <TabsTrigger value="jwt" className=" disabled data-[state=active]:bg-gray-900">
                 JWT Token
-              </TabsTrigger>
+              </TabsTrigger> */}
             </TabsList>
 
             <TabsContent value="steam" className="mt-4">
