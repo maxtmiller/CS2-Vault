@@ -1,8 +1,11 @@
-import fs from 'fs';
+import fs from 'fs'
+import path from 'path'
 
 export async function deleteInventoryData() {
 
-    const filePath = 'public/full_inventory_data.json';
+    const rootFolder = process.cwd();
+    const filePath = path.join(rootFolder, 'temp/full_inventory_data.json');
+    const data = fs.readFileSync(filePath, 'utf-8');
 
     if (fs.existsSync(filePath)) {
         fs.unlink(filePath, (err: any) => {

@@ -82,7 +82,7 @@
   },
   "devDependencies": {
     "@types/globaloffensive": "^2.3.4",
-    "@types/node": "^22",
+    "@types/node": "^22.14.0",
     "@types/qrcode": "^1.5.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",

@@ -1,7 +1,9 @@
 import type { InventoryItem } from "@/lib/steam-api"
-import CRC32 from 'crc-32';
-import protobuf from 'protobufjs';
-import fs from 'fs';
+import CRC32 from 'crc-32'
+import protobuf from 'protobufjs'
+import fs from 'fs'
+import path from 'path'
+
 
 interface CS2Sticker {
     slot: number;
@@ -532,7 +534,9 @@ export async function processInventoryData(data: any, steamId: string): Promise<
     const mergedData = JSON.parse(mergedJson);
 
     try {
-        fs.writeFileSync('public/full_inventory_data.json', JSON.stringify(mergedData, null, 2), 'utf-8');
+        const rootFolder = process.cwd();
+        const filePath = path.join(rootFolder, 'temp/full_inventory_data.json');
+        fs.writeFileSync(filePath, JSON.stringify(mergedData, null, 2), 'utf-8');
         console.log('File written successfully');
     } catch (error) {
         console.error('Error writing file:', error);

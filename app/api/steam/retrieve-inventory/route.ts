@@ -46,6 +46,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ result });
   } catch (error) {
     console.error("Error retrieving inventory:", error)
-    return NextResponse.json({ error: "Failed to retrieve inventory" }, { status: 500 })
+    return NextResponse.json({ error: "Failed to retrieve inventory", details: error }, { status: 500 })
   }
 }

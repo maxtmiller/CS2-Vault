@@ -3,6 +3,7 @@ import GlobalOffensive from 'globaloffensive';
 import fs from 'fs';
 import CRC32 from 'crc-32';
 import protobuf from 'protobufjs';
+import path from 'path';
 
 
 function findFloatRange(float) {
@@ -446,7 +447,10 @@ export async function initializeCSGOInventory(authData, loginType) {
                     mergedData = await mergeData(mergedData);
                     mergedData = await appendInfo(mergedData);
 
-                    fs.writeFileSync(`public/full_inventory_data.json`, mergedData, 'utf-8');
+                    const rootFolder = process.cwd();
+                    const filePath = path.join(rootFolder, 'temp/full_inventory_data.json');
+
+                    fs.writeFileSync(filePath, mergedData, 'utf-8');
 
                     resolve({ item_data: mergedData, steamID: steamID, storage_units: storage_units });
                 } catch (err) {
