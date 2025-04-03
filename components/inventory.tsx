@@ -15,6 +15,8 @@ import { SelectedItems } from "@/components/selected-items"
 export function Inventory({ steamId }: { steamId: string | null }) {
   const [items, setItems] = useState<InventoryItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
   const [storageUnitNames, setStorageUnitNames] = useState<string[]>([])
   const [filteredValue, setFilteredValue] = useState(0)
   const [visibleItems, setVisibleItems] = useState(24) // Show 4 rows initially (6 items per row)
@@ -68,37 +70,89 @@ export function Inventory({ steamId }: { steamId: string | null }) {
   })
 
   // Fetch inventory data
-  useEffect(() => {
-    async function loadInventory() {
-      if (!steamId) {
+  // useEffect(() => {
+  //   async function loadInventory() {
+  //     if (!steamId) {
+  //       setLoading(false)
+  //       return
+  //     }
+
+  //     setLoading(true)
+  //     try {
+  //       const data = await fetchInventory(steamId)
+  //       setItems(data)
+  //       setFilteredItems(data)
+
+  //       // Calculate initial filtered value (all items)
+  //       const initialValue = data.reduce((sum, item) => sum + (item.steam_price || 0) * (item.quantity || 1), 0)
+  //       setFilteredValue(initialValue)
+
+  //       // Extract unique storage unit names
+  //       const uniqueStorageUnits = Array.from(
+  //         new Set(data.filter((item) => item.storageUnit).map((item) => item.storageUnit as string)),
+  //       )
+  //       setStorageUnitNames(uniqueStorageUnits)
+  //     } catch (error) {
+  //       console.error("Error loading inventory:", error)
+  //     } finally {
+  //       setLoading(false)
+  //     }
+  //   }
+
+  //   loadInventory()
+  // }, [steamId])
+
+  const loadInventory = async () => {
+    setLoading(true)
+    setError(null)
+
+    // Create a timeout promise that rejects after 15 seconds
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error("Loading inventory timed out")), 15000)
+    })
+
+    try {
+      // Race between the actual fetch and the timeout
+      const inventoryData = await Promise.race([fetchInventory(), timeoutPromise])
+
+      if (Array.isArray(inventoryData) && inventoryData.length > 0) {
+        setItems(inventoryData)
+        setFilteredItems(inventoryData)
         setLoading(false)
-        return
+        // Reset retry count on success
+        setRetryCount(0)
+        // Store success timestamp in localStorage
+        localStorage.setItem("inventory_last_loaded", Date.now().toString())
+      } else {
+        throw new Error("Invalid inventory data received")
       }
+    } catch (err) {
+      console.error("Error loading inventory:", err)
+      setError(`Failed to load inventory: ${err instanceof Error ? err.message : "Unknown error"}`)
+      setLoading(false)
 
-      setLoading(true)
-      try {
-        const data = await fetchInventory(steamId)
-        setItems(data)
-        setFilteredItems(data)
-
-        // Calculate initial filtered value (all items)
-        const initialValue = data.reduce((sum, item) => sum + (item.steam_price || 0) * (item.quantity || 1), 0)
-        setFilteredValue(initialValue)
-
-        // Extract unique storage unit names
-        const uniqueStorageUnits = Array.from(
-          new Set(data.filter((item) => item.storageUnit).map((item) => item.storageUnit as string)),
-        )
-        setStorageUnitNames(uniqueStorageUnits)
-      } catch (error) {
-        console.error("Error loading inventory:", error)
-      } finally {
-        setLoading(false)
+      // Auto-retry logic (max 3 attempts)
+      if (retryCount < 3) {
+        setRetryCount((prev) => prev + 1)
+        setTimeout(() => loadInventory(), 2000) // Retry after 2 seconds
       }
     }
+  }
 
+  // Handle manual retry
+  const handleRetry = () => {
+    setRetryCount(0)
     loadInventory()
-  }, [steamId])
+  }
+
+  useEffect(() => {
+    loadInventory()
+
+    // Cleanup function
+    return () => {
+      // Any cleanup needed
+    }
+  }, [])
 
   // Handle scroll events to detect when user has scrolled
   useEffect(() => {
