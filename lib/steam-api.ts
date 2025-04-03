@@ -50,37 +50,13 @@ export interface InventoryItem {
 export async function fetchInventory(steamId: string): Promise<InventoryItem[]> {
   console.log(`Fetching inventory for Steam ID: ${steamId}`)
 
-  // try {
-  //   const file_data = await fetchInventoryFromJSON();
-  //   if (!(Array.isArray(file_data) && file_data.length === 0)) {
-  //     return file_data;
-  //   }
-
-  //   const response = await fetch(`/api/steam/inventory?steamid=${steamId}`)
-
-  //   if (!response.ok) {
-  //     throw new Error(`API error: ${response.status}`)
-  //   }
-
-  //   const data = await response.json()
-  //   const result = data.processedData
-
-  //   return result
-  // } catch {
-  //   console.error("Error fetching inventory:")
-  //   return getMockInventoryItems()
-  // }
-
   try {
-    // Use our proxy endpoint instead of calling Steam directly
-    const response = await fetch(`/api/steam/inventory?steamid=${steamId}`, {
-      // Add cache: 'no-store' to prevent caching
-      cache: "no-store",
-      headers: {
-        // Add a timestamp to prevent caching
-        "X-Timestamp": Date.now().toString(),
-      },
-    })
+    const file_data = await fetchInventoryFromJSON();
+    if (!(Array.isArray(file_data) && file_data.length === 0)) {
+      return file_data;
+    }
+
+    const response = await fetch(`/api/steam/inventory?steamid=${steamId}`)
 
     if (!response.ok) {
       throw new Error(`API error: ${response.status}`)
@@ -88,6 +64,21 @@ export async function fetchInventory(steamId: string): Promise<InventoryItem[]> 
 
     const data = await response.json()
     const result = data.processedData
+
+    return result
+  } catch {
+    console.error("Error fetching inventory:")
+    return getMockInventoryItems()
+  }
+
+  try {
+    // Use our proxy endpoint instead of calling Steam directly
+    const response = await fetch(`/api/steam/inventory?steamid=${steamId}`, {
+      // Add cache: 'no-store' to prevent caching
+    })
+
+    const data = await response.json()
+    const result = data.processedData.item_data
 
     // Process the Steam inventory data
     return result
