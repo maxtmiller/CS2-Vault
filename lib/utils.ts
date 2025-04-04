@@ -42,7 +42,7 @@ export async function fetchAllInventoryData(authData: string, loginType: number)
     return { success: true, item_data, storage_units, error: null }
   } catch (error) {
     console.error("Error fetching inventory:", error);
-    return { success: false, item_data: [], storage_units: 0, error};
+    return { success: false, item_data: [], storage_units: 0, error: error || "default error"};
   }
 }
 
@@ -67,7 +67,7 @@ export async function fetchVisibleInventoryData(steamId: string): Promise<any | 
     return { success: true, item_data: result, storage_units: 0, error: null }
   } catch (error) {
     console.error("Error fetching inventory:", error)
-    return { success: false, item_data: [], storage_units: 0, error };
+    return { success: false, item_data: [], storage_units: 0, error: error || "default error" };
   }
 }
 

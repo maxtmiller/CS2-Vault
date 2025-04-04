@@ -116,7 +116,7 @@ export async function fetchInventory(steamId: string): Promise<{ success: Boolea
       }
       return response
     } catch (error) {
-      return { success: true, item_data: getMockInventoryItems(), storage_units: 0, error: null}
+      return { success: true, item_data: getMockInventoryItems(), storage_units: 0, error: "default error"}
     }
   }
 }
