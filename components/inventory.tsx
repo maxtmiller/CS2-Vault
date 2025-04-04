@@ -107,11 +107,11 @@ export function Inventory({ steamId }: { steamId: string | null }) {
         // Calculate initial filtered value (all items)
         const initialValue = items.reduce((sum, item) => sum + (item.steam_price || 0) * (item.quantity || 1), 0)
         setFilteredValue(initialValue)
-        
+
         if (!data.success) {
           setTimeout(() => {
             handleLogout();
-          }, 3000);
+          }, 7000);
         }
       } catch (error) {
         console.error("Error loading inventory:", error)
