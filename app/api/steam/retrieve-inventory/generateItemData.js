@@ -9,33 +9,63 @@ import { fetchData, getFullItemData, getFullPriceData, getFullSkinData } from "@
 
 function findFloatRange(float) {
 
+    // const floatRanges = [
+    //     { min: 0.00, max: 0.01 },
+    //     { min: 0.01, max: 0.02 },
+    //     { min: 0.02, max: 0.03 },
+    //     { min: 0.03, max: 0.04 },
+    //     { min: 0.04, max: 0.07 },
+    //     { min: 0.07, max: 0.08 },
+    //     { min: 0.08, max: 0.09 },
+    //     { min: 0.09, max: 0.10 },
+    //     { min: 0.10, max: 0.15 },
+    //     { min: 0.15, max: 0.18 },
+    //     { min: 0.18, max: 0.21 },
+    //     { min: 0.21, max: 0.24 },
+    //     { min: 0.24, max: 0.27 },
+    //     { min: 0.27, max: 0.38 },
+    //     { min: 0.38, max: 0.39 },
+    //     { min: 0.39, max: 0.40 },
+    //     { min: 0.40, max: 0.41 },
+    //     { min: 0.41, max: 0.42 },
+    //     { min: 0.42, max: 0.45 },
+    //     { min: 0.45, max: 0.50 },
+    //     { min: 0.50, max: 0.60 },
+    //     { min: 0.60, max: 0.70 },
+    //     { min: 0.70, max: 0.80 },
+    //     { min: 0.80, max: 0.90 },
+    //     { min: 0.90, max: 1.00 }
+    // ];
+
     const floatRanges = [
         { min: 0.00, max: 0.01 },
-        { min: 0.01, max: 0.02 },
-        { min: 0.02, max: 0.03 },
-        { min: 0.03, max: 0.04 },
-        { min: 0.04, max: 0.07 },
+        { min: 0.00, max: 0.02 },
+        { min: 0.00, max: 0.03 },
+        { min: 0.00, max: 0.04 },
+        { min: 0.00, max: 0.07 },
         { min: 0.07, max: 0.08 },
-        { min: 0.08, max: 0.09 },
-        { min: 0.09, max: 0.10 },
-        { min: 0.10, max: 0.15 },
+        { min: 0.07, max: 0.09 },
+        { min: 0.07, max: 0.10 },
+        { min: 0.07, max: 0.15 },
         { min: 0.15, max: 0.18 },
-        { min: 0.18, max: 0.21 },
-        { min: 0.21, max: 0.24 },
-        { min: 0.24, max: 0.27 },
-        { min: 0.27, max: 0.38 },
+        { min: 0.15, max: 0.21 },
+        { min: 0.15, max: 0.24 },
+        { min: 0.15, max: 0.27 },
+        { min: 0.15, max: 0.38 },
         { min: 0.38, max: 0.39 },
-        { min: 0.39, max: 0.40 },
-        { min: 0.40, max: 0.41 },
-        { min: 0.41, max: 0.42 },
-        { min: 0.42, max: 0.45 },
+        { min: 0.38, max: 0.40 },
+        { min: 0.38, max: 0.41 },
+        { min: 0.38, max: 0.42 },
+        { min: 0.38, max: 0.45 },
         { min: 0.45, max: 0.50 },
-        { min: 0.50, max: 0.60 },
-        { min: 0.60, max: 0.70 },
-        { min: 0.70, max: 0.80 },
-        { min: 0.80, max: 0.90 },
-        { min: 0.90, max: 1.00 }
+        { min: 0.45, max: 0.60 },
+        { min: 0.45, max: 0.70 },
+        { min: 0.45, max: 0.80 },
+        { min: 0.45, max: 0.90 },
+        { min: 0.45, max: 1.00 }
     ];
+
+    
 
     for (const range of floatRanges) {
         if (float >= range.min && float < range.max) {
