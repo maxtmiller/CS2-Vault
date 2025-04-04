@@ -73,6 +73,7 @@ export async function fetchInventory(steamId: string): Promise<{ item_data: Inve
       const loginType = parsedLoginInfo.loginType
 
       const response = await fetchAllInventoryData(authData, loginType)
+      console.log("Fetched inventory data:", response)
       if (!response) {
         throw new Error(`API error: No inventory data found`)
       }

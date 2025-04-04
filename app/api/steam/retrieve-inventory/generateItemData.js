@@ -516,7 +516,7 @@ export async function initializeCSGOInventory(authData, loginType) {
                     // const filePath = path.join(rootFolder, `temp/full_inventory_data-${steamID}.json`);
                     // fs.writeFileSync(filePath, mergedData, 'utf-8');
 
-                    resolve({ item_data: mergedData, steamID: steamID, storage_units: storage_units });
+                    resolve({ success: true, item_data: mergedData, steamID: steamID, storage_units: storage_units });
                 } catch (err) {
                     console.error('Error processing inventory:', err);
                     reject(err);
@@ -530,7 +530,7 @@ export async function initializeCSGOInventory(authData, loginType) {
 
         client.on('error', (err) => {
             console.error('Steam login error:', err);
-            reject(err);
+            reject({ success: false, err} );
         });
     });
 }

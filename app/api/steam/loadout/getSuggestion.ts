@@ -25,8 +25,6 @@ export async function getSuggestionCohere(items: any[]): Promise<any> {
         }
         prompt += "suggest at least 4 items that fit with my loadout with similar colours and a price, prioritize more useful weapons like gloves, knives, ak, m4, usp, glock in this order of importance and then other items."
 
-        console.log(prompt)
-
         const systemMessage = `
             ## Task and Context
             You are a specialist in Valve's game CS2 and you will suggest items for the user that have similar colours to the items provided.
@@ -53,7 +51,7 @@ export async function getSuggestionCohere(items: any[]): Promise<any> {
 
         let responseText = "";
         if (response.message.content) {
-            console.log(response.message.content[0].text);
+            // console.log(response.message.content[0].text);
             responseText = response.message.content[0].text;
         }
 
