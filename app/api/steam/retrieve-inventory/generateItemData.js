@@ -186,60 +186,61 @@ async function getItemInfoByDefIndex(old_data) {
 
     if (old_data.def_index ===  1201 || (old_data.def_index === 36 && old_data.paint_index === 125)) return null;
 
-    if (old_data.def_index === 521) {
+    if (old_data.hasOwnProperty('paint_wear') && !old_data.hasOwnProperty('paint_index')) {
+        old_data.paint_index = 0;
 
-        const data = {
-            "name": JSON.stringify(old_data),
-            "rarity_name": "Extraordinary",
-            "type": "Gloves",
-            "category": "weapon",
-            "csfloat": "https://csfloat.com/search?sort_by=lowest_price&category=1&min_float=0.21&max_float=0.24&def_index=5030&paint_index=10073",
-            "steam": "https://steamcommunity.com/market/listings/730/%E2%98%85%20Sport%20Gloves%20%7C%20Slingshot%20%28Field-Tested%29",
-            "icon_url": "https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/panorama/images/econ/default_generated/sporty_gloves_sporty_slingshot_light_png.png",
-            "inspect_link": "steam://rungame/730/76561202255233023/+csgo_econ_action_preview%200018A62720D94E280638FDBEEBF203409B035A00327083D0",
-            "steam_price": 1453
-        };
-        return data;
+        // const data = {
+        //     "name": JSON.stringify(old_data),
+        //     "rarity_name": "Extraordinary",
+        //     "type": "Gloves",
+        //     "category": "weapon",
+        //     "csfloat": "https://csfloat.com/search?sort_by=lowest_price&category=1&min_float=0.21&max_float=0.24&def_index=5030&paint_index=10073",
+        //     "steam": "https://steamcommunity.com/market/listings/730/%E2%98%85%20Sport%20Gloves%20%7C%20Slingshot%20%28Field-Tested%29",
+        //     "icon_url": "https://raw.githubusercontent.com/ByMykel/counter-strike-image-tracker/main/static/panorama/images/econ/default_generated/sporty_gloves_sporty_slingshot_light_png.png",
+        //     "inspect_link": "steam://rungame/730/76561202255233023/+csgo_econ_action_preview%200018A62720D94E280638FDBEEBF203409B035A00327083D0",
+        //     "steam_price": 1453
+        // };
+        // return data;
 
-        // item = Object.values(full_skin_data).find(item => item.paint_index === null && item.weapon.weapon_id === old_data.def_index);
-        // if (!item) {
-        //     return null;
-        // }
-        // let title;
-        // if (old_data.is_stattrak) {
-        //     title = `StatTrak™ ${item.name}`;
-        // } else {
-        //     title = `${item.name}`;
-        // }
-        // const price = full_price_data[title];
-        // const category = 'weapon';
-        // const inspect_link = await generateInspectLinkFromObject(old_data);
-        // let item_category;
-        // if (old_data.is_stattrak == true) {
-        //     item_category = 2;
-        // } else {
-        //     item_category = 1;
-        // }
-        // const CSFloat = `https://csfloat.com/search?sort_by=lowest_price&category=${category}&def_index=${old_data.def_index}&paint_index=0`
-        // let encodedString;
-        // if (old_data.is_stattrak == true) {
-        //     encodedString = encodeURIComponent(`StatTrak™ ${item.name}`)
-        // } else {
-        //     encodedString = encodeURIComponent(`${item.name}`)
-        // }
-        // const SteamMarket = `https://steamcommunity.com/market/listings/730/${encodedString}`
-        // const item_data = {
-        //     name: item.name,
-        //     rarity_name: item.hasOwnProperty('rarity') ? item.rarity.name : 'Base Grade',
-        //     type: item.type ?? item.category?.name ?? customType,
-        //     category: category,
-        //     csfloat: CSFloat,
-        //     steam: SteamMarket,
-        //     icon_url: item.image,
-        //     inspect_link: inspect_link,
-        //     steam_price: price ? price.steam.last_ever : null,
-        // }
-        // return item_data;
+        item = Object.values(full_skin_data).find(item => item.paint_index === null && item.weapon.weapon_id === old_data.def_index);
+        if (!item) {
+            return null;
+        }
+        let title;
+        if (old_data.is_stattrak) {
+            title = `StatTrak™ ${item.name}`;
+        } else {
+            title = `${item.name}`;
+        }
+        const price = full_price_data[title];
+        const category = 'weapon';
+        const inspect_link = await generateInspectLinkFromObject(old_data);
+        let item_category;
+        if (old_data.is_stattrak == true) {
+            item_category = 2;
+        } else {
+            item_category = 1;
+        }
+        const CSFloat = `https://csfloat.com/search?sort_by=lowest_price&category=${category}&def_index=${old_data.def_index}&paint_index=0`
+        let encodedString;
+        if (old_data.is_stattrak == true) {
+            encodedString = encodeURIComponent(`StatTrak™ ${item.name}`)
+        } else {
+            encodedString = encodeURIComponent(`${item.name}`)
+        }
+        const SteamMarket = `https://steamcommunity.com/market/listings/730/${encodedString}`
+        const item_data = {
+            name: item.name,
+            rarity_name: "Covert",
+            type: "Knives",
+            category: category,
+            csfloat: CSFloat,
+            steam: SteamMarket,
+            icon_url: item.image,
+            inspect_link: inspect_link,
+            steam_price: price ? price.steam.last_ever : null,
+        }
+        return item_data;
     }
 
     let item;
