@@ -217,7 +217,7 @@ async function getItemInfoByDefIndex(old_data) {
         }
         const SteamMarket = `https://steamcommunity.com/market/listings/730/${encodedString}`
         const item_data = {
-            name: item.name,
+            name: item.name+' Vanilla',
             rarity_name: "Covert",
             type: "Knives",
             category: category,
