@@ -3,7 +3,8 @@ import path from 'path';
 import protobuf from 'protobufjs';
 import CRC32 from 'crc-32';
 import type { ResponseData } from './route'
-import { getItemData, getPriceData, getSkinData } from '@/lib/data-loader'
+import { fetchData, getFullItemData, getFullPriceData, getFullSkinData } from "@/lib/data-loader"
+import type { PriceData, SkinData } from '@/lib/data-loader'
 
 
 interface FloatRange {
@@ -14,25 +15,6 @@ interface FloatRange {
 interface Rarity {
     name: string;
     num: number;
-}
-
-interface SkinData {
-    name: string;
-    rarity: { name: string };
-    weapon: { weapon_id: number };
-    paint_index: string;
-    category: { name: string };
-    souvenir: boolean;
-    stattrak: boolean;
-    image: string;
-}
-
-interface PriceData {
-    [key: string]: {
-        steam: {
-            last_ever: number | null;
-        };
-    };
 }
 
 export interface ItemData {
@@ -66,27 +48,10 @@ interface Sticker {
     rotation?: number;
 }
 
-const rootFolder = process.cwd();
-const full_price_data_filePath = path.join(rootFolder, 'public/price_data.json');
-const full_skin_data_filePath = path.join(rootFolder, 'public/skins_data.json');
-const full_price_data_unformatted = JSON.parse(fs.readFileSync(full_price_data_filePath, 'utf8'));
-const full_skin_data_unformatted = JSON.parse(fs.readFileSync(full_skin_data_filePath, 'utf8'));
 
-const full_skin_data: { [key: string]: SkinData } = full_skin_data_unformatted;
-const full_price_data: PriceData = full_price_data_unformatted;
+let full_price_data: PriceData;
+let full_skin_data: SkinData;
 
-
-// let full_price_data: PriceData;
-// let full_skin_data: SkinData;
-
-// async function fetchDataOnce() {
-//     [full_price_data, full_skin_data] = await Promise.all([
-//       getPriceData(),
-//       getSkinData(),
-//     ]);
-// }
-  
-// fetchDataOnce();
 
 async function generateInspectLinkFromObject(props: ItemData): Promise<string | null> {
     const previewLink = "steam://rungame/730/76561202255233023/+csgo_econ_action_preview%20";
@@ -186,6 +151,11 @@ function getRarityNum(rarity_name: string): number | null {
 export async function getSuggestionItemInfo(
     items: ResponseData,
 ): Promise<ItemData | null> {
+
+    await fetchData();
+
+    full_price_data = getFullPriceData()
+    full_skin_data = getFullSkinData()
 
     const item = Object.values(full_skin_data).find(item => item.name === items.name);
 

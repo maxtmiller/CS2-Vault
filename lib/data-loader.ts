@@ -146,45 +146,47 @@ export interface PriceData {
   }
 }
 
+// Cache the data to avoid reading from disk on every request
+let itemDataCache: ItemData | null = null
+let priceDataCache: PriceData | null = null
+let skinDataCache: SkinData | null = null
+
 // Function to load data with proper error handling
-// export function loadData<T>(filename: string): T {
-//   try {
-//     const filePath = path.join(process.cwd(), "public", filename)
-//     const fileContents = fs.readFileSync(filePath, "utf8")
-//     return JSON.parse(fileContents) as T
-//   } catch (error) {
-//     console.error(`Error loading ${filename}:`, error)
-//     return {} as T
-//   }
-// }
+export function loadDataFromBackup<T>(filename: string): T {
+  try {
+    const filePath = path.join(process.cwd(), "public", "backup", filename)
+    const fileContents = fs.readFileSync(filePath, "utf8")
+    return JSON.parse(fileContents) as T
+  } catch (error) {
+    console.error(`Error loading ${filename}:`, error)
+    return {} as T
+  }
+}
 
-// // Cache the data to avoid reading from disk on every request
-// let itemDataCache: ItemData | null = null
-// let priceDataCache: PriceData | null = null
-// let skinDataCache: SkinData | null = null
 
-// export function getItemData(): ItemData {
-//   if (!itemDataCache) {
-//     itemDataCache = loadData<ItemData>("item_data.json")
-//   }
-//   return itemDataCache
-// }
 
-// export function getPriceData(): PriceData {
-//   if (!priceDataCache) {
-//     priceDataCache = loadData<PriceData>("price_data.json")
-//   }
-//   return priceDataCache
-// }
+export function getItemDataBackup(): ItemData {
+  if (!itemDataCache) {
+    itemDataCache = loadDataFromBackup<ItemData>("item_data.json")
+  }
+  return itemDataCache
+}
 
-// export function getSkinData(): SkinData {
-//   if (!skinDataCache) {
-//     skinDataCache = loadData<SkinData>("skins_data.json")
-//   }
-//   return skinDataCache
-// }
+export function getPriceDataBackup(): PriceData {
+  if (!priceDataCache) {
+    priceDataCache = loadDataFromBackup<PriceData>("price_data.json")
+  }
+  return priceDataCache
+}
 
-async function loadData<T>(url: string): Promise<T> {
+export function getSkinDataBackup(): SkinData {
+  if (!skinDataCache) {
+    skinDataCache = loadDataFromBackup<SkinData>("skins_data.json")
+  }
+  return skinDataCache
+}
+
+async function loadDataFromURL<T>(url: string): Promise<T> {
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(`Failed to fetch data from ${url}: ${response.statusText}`);
@@ -192,27 +194,74 @@ async function loadData<T>(url: string): Promise<T> {
   return response.json();
 }
 
-let itemDataCache: ItemData | null = null;
-let priceDataCache: PriceData | null = null;
-let skinDataCache: SkinData | null = null;
 
-export async function getItemData(): Promise<ItemData> {
+export async function getItemDataURL(): Promise<ItemData> {
   if (!itemDataCache) {
-    itemDataCache = await loadData<ItemData>("https://bymykel.github.io/CSGO-API/api/en/all.json");
+    itemDataCache = await loadDataFromURL<ItemData>("https://bymykel.github.io/CSGO-API/api/en/all.json");
   }
   return itemDataCache;
 }
 
-export async function getPriceData(): Promise<PriceData> {
+export async function getPriceDataURL(): Promise<PriceData> {
   if (!priceDataCache) {
-    priceDataCache = await loadData<PriceData>("https://raw.githubusercontent.com/ByMykel/counter-strike-price-tracker/main/static/prices/latest.json");
+    priceDataCache = await loadDataFromURL<PriceData>("https://raw.githubusercontent.com/ByMykel/counter-strike-price-tracker/main/static/prices/latest.json");
   }
   return priceDataCache;
 }
 
-export async function getSkinData(): Promise<SkinData> {
+export async function getSkinDataURL(): Promise<SkinData> {
   if (!skinDataCache) {
-    skinDataCache = await loadData<SkinData>("https://bymykel.github.io/CSGO-API/api/en/skins.json");
+    skinDataCache = await loadDataFromURL<SkinData>("https://bymykel.github.io/CSGO-API/api/en/skins.json");
   }
   return skinDataCache;
+}
+
+
+let full_item_data: ItemData;
+let full_price_data: PriceData;
+let full_skin_data: SkinData;
+
+
+async function fetchURLData() {
+  [full_item_data, full_price_data, full_skin_data] = await Promise.all([
+      getItemDataURL(),
+      getPriceDataURL(),
+      getSkinDataURL(),
+  ]);
+}  
+
+async function fetchBackupData() {
+  [full_item_data, full_price_data, full_skin_data] = await Promise.all([
+      getItemDataBackup(),
+      getPriceDataBackup(),
+      getSkinDataBackup(),
+  ]);
+}
+
+export function getFullItemData() {
+  return full_item_data;
+}
+
+export function getFullPriceData() {
+  return full_price_data;
+}
+
+export function getFullSkinData() {
+  return full_skin_data;
+}
+
+
+export async function fetchData() {
+  try {
+      await fetchURLData(); // Try fetching the main data
+      console.log("Fetched main data successfully.");
+  } catch (error) {
+      console.error("Error fetching main data, attempting backup...", error);
+      try {
+          await fetchBackupData(); // If main data fails, fetch backup data
+          console.log("Fetched backup data successfully.");
+      } catch (backupError) {
+          console.error("Error fetching backup data as well.", backupError);
+      }
+  }
 }

@@ -3,61 +3,9 @@ import CRC32 from 'crc-32'
 import protobuf from 'protobufjs'
 import fs from 'fs'
 import path from 'path'
-import { getItemData, getPriceData, getSkinData } from '@/lib/data-loader'
+import { ItemData, SkinData, PriceData } from "@/lib/data-loader"
+import { fetchData, getFullItemData, getFullPriceData, getFullSkinData } from "@/lib/data-loader"
 
-
-interface FloatRange {
-    min: number;
-    max: number;
-}
-
-interface Rarity {
-    name: string;
-    num: number;
-}
-
-interface SkinData {
-    name: string;
-    rarity: { name: string };
-    weapon: { weapon_id: number };
-    paint_index: string;
-    category: { name: string };
-    souvenir: boolean;
-    stattrak: boolean;
-    image: string;
-}
-
-interface PriceData {
-    [key: string]: {
-        steam: {
-            last_ever: number | null;
-        };
-    };
-}
-
-export interface ItemData {
-    id: string,
-    def_index: number;
-    name: string;
-    paint_index: number;
-    paint_seed: number;
-    paint_wear: number;
-    wear_name: string;
-    rarity: number;
-    rarity_name: string;
-    category: string;
-    type: string;
-    custom_name: null;
-    is_souvenir: boolean;
-    is_stattrak: boolean;
-    icon_url: string;
-    csfloat: string;
-    steam: string;
-    inspect_link: string | null;
-    steam_price: number | null;
-    stickers?: string | null;
-    reason: string | null
-}
 
 interface CS2Sticker {
     slot: number;
@@ -132,27 +80,11 @@ interface SkinItem {
     tags: Tag[];
 }
 
-const rootFolder = process.cwd();
-const full_item_data_filePath = path.join(rootFolder, 'public/item_data.json');
-const full_price_data_filePath = path.join(rootFolder, 'public/price_data.json');
-const full_skin_data_filePath = path.join(rootFolder, 'public/skins_data.json');
-const full_item_data = JSON.parse(fs.readFileSync(full_item_data_filePath, 'utf8'));
-const full_price_data = JSON.parse(fs.readFileSync(full_price_data_filePath, 'utf8'));
-const full_skin_data = JSON.parse(fs.readFileSync(full_skin_data_filePath, 'utf8'));
 
-// let full_item_data: ItemData;
-// let full_price_data: PriceData;
-// let full_skin_data: SkinData;
+let full_item_data: ItemData;
+let full_price_data: PriceData;
+let full_skin_data: SkinData;
 
-// async function fetchDataOnce() {
-//     [full_item_data, full_price_data, full_skin_data] = await Promise.all([
-//         getItemData(),
-//         getPriceData(),
-//         getSkinData(),
-//     ]);
-// }
-  
-// fetchDataOnce();
 
 async function generateInspectLinkFromObject(props: InspectItem): Promise<string | null> {
     const previewLink = "steam://rungame/730/76561202255233023/+csgo_econ_action_preview%20";
@@ -577,6 +509,12 @@ export async function processInventoryData(data: any, steamId: string): Promise<
     if (!assets || !descriptions) {
         return [];
     }
+
+    await fetchData();
+
+    full_item_data = getFullItemData()
+    full_price_data = getFullPriceData()
+    full_skin_data = getFullSkinData()
 
     // Create a map of description by classid and instanceid
     const descriptionMap = new Map();

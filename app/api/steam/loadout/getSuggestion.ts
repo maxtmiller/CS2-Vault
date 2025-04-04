@@ -94,6 +94,7 @@ export async function getSuggestionGemini(items: any[]): Promise<any> {
             Provide as many items as needed to complete their loadout with the main guns. That is, provide AT LEAST 4 items.
             Give items in the same price range as the ones inputted, DO NOT provide an item that is much more expensive unless it is a knife or glove.
             DO NOT include the wear in the item name, do not suggest stattrak items.
+            For knives and gloves, remember the names have a star in front, like "★ Karambit | Fade" and "★ Moto Gloves | Spearmint"
 
             ## Style Guide
             Respond in following the exact json specification below for each item suggested, and put all the items into an array that you will return

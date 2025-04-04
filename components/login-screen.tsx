@@ -42,10 +42,14 @@ export function LoginScreen() {
   }
 
   const handleSteamOAuth = async () => {
+
+    const EXPIRATION_TIME = 1000 * 60 * 60 * 7;
+    
     localStorage.setItem(
       "login_type",
       JSON.stringify({
         timestamp: Date.now(),
+        expiresAt: Date.now() + EXPIRATION_TIME,
         type: "steam",
         loginType: 3,
         authData: "",
@@ -67,10 +71,13 @@ export function LoginScreen() {
         // accessTokenSetAt: data.session.accessTokenSetAt,
       }
 
+      const EXPIRATION_TIME = 1000 * 60 * 60 * 7;
+
       localStorage.setItem(
         "login_type",
         JSON.stringify({
           timestamp: Date.now(),
+          expiresAt: Date.now() + EXPIRATION_TIME,
           type: "qr",
           loginType: 1,
           authData: JSON.stringify(authData) || "",
@@ -207,10 +214,13 @@ export function LoginScreen() {
         throw new Error("Invalid JWT token")
       }
 
+      const EXPIRATION_TIME = 1000 * 60 * 60 * 7;
+
       localStorage.setItem(
         "login_type",
         JSON.stringify({
           timestamp: Date.now(),
+          expiresAt: Date.now() + EXPIRATION_TIME,
           type: "jwt",
           loginType: 2,
           authData: jwtToken || "",

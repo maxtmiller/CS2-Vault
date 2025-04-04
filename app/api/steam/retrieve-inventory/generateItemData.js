@@ -4,7 +4,7 @@ import fs from 'fs';
 import CRC32 from 'crc-32';
 import protobuf from 'protobufjs';
 import path from 'path';
-import { getItemData, getPriceData, getSkinData } from '@/lib/data-loader'
+import { fetchData, getFullItemData, getFullPriceData, getFullSkinData } from "@/lib/data-loader"
 
 
 function findFloatRange(float) {
@@ -45,28 +45,10 @@ function findFloatRange(float) {
     return null;
 }
 
-const rootFolder = process.cwd();
-const full_item_data_filePath = path.join(rootFolder, 'public/item_data.json');
-const full_price_data_filePath = path.join(rootFolder, 'public/price_data.json');
-const full_skin_data_filePath = path.join(rootFolder, 'public/skins_data.json');
-const full_item_data = JSON.parse(fs.readFileSync(full_item_data_filePath, 'utf8'));
-const full_price_data = JSON.parse(fs.readFileSync(full_price_data_filePath, 'utf8'));
-const full_skin_data = JSON.parse(fs.readFileSync(full_skin_data_filePath, 'utf8'));
 
-
-// let full_item_data;
-// let full_price_data;
-// let full_skin_data;
-
-// async function fetchDataOnce() {
-//     [full_item_data, full_price_data, full_skin_data] = await Promise.all([
-//         getItemData(),
-//         getPriceData(),
-//         getSkinData(),
-//     ]);
-// }
-  
-// fetchDataOnce();
+let full_item_data;
+let full_price_data;
+let full_skin_data;
 
 
 async function generateInspectLinkFromObject(props) {
@@ -436,6 +418,12 @@ export async function initializeCSGOInventory(authData, loginType) {
 
         csgo.on('connectedToGC', async () => {
             console.log('Connected to CS2 Game Coordinator.');
+
+            await fetchData();
+
+            full_item_data = getFullItemData()
+            full_price_data = getFullPriceData()
+            full_skin_data = getFullSkinData()
 
             if (csgo.inventory) {
                 console.log('Inside Inventory.');
