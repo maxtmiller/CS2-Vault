@@ -1,6 +1,31 @@
 import { Inventory } from "@/components/inventory"
 import { LoginScreen } from "@/components/login-screen"
 import { cookies } from "next/headers"
+import { Metadata } from "next"
+
+
+export async function generateMetadata(): Promise<Metadata> {
+  const cookieStore = await cookies()
+  const sessionCookie = cookieStore.get("steam_session")
+
+  let isAuthenticated = false
+  let steamId = null
+
+  if (sessionCookie) {
+    try {
+      const session = JSON.parse(sessionCookie.value)
+      isAuthenticated = session.authenticated === true
+      steamId = session.steamId
+    } catch (error) {
+      console.error("Error parsing session cookie:", error)
+    }
+  }
+
+  return {
+    title: isAuthenticated ? `CS2Vault - ${steamId} Inventory` : "CS2Vault - Login",
+  }
+}
+
 
 export default async function Home() {
   // Check if the user is authenticated by looking for the steam session cookie

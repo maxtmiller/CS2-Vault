@@ -14,7 +14,6 @@ import { SelectedItems } from "@/components/selected-items"
 import Link from "next/link"
 
 
-
 export function Inventory({ steamId }: { steamId: string | null }) {
   const [items, setItems] = useState<InventoryItem[]>([])
   const [storageUnits, setStorageUnits] = useState<number>()
@@ -215,143 +214,145 @@ export function Inventory({ steamId }: { steamId: string | null }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white" style={{ maxHeight: "100vh" }}>
-      <header className="sticky top-0 z-50 border-b border-gray-800 bg-gray-950 shadow-md transition-all duration-300">
-        <div className="container mx-auto p-4">
-          <div className="flex items-center justify-between">
-            {/* Left section */}
-            <div className="flex items-center gap-4">
-              <img src="/logo.png" width="35" height="35"></img>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-                CS2 Vault
-              </h1>
-            </div>
-
-            {/* Stats in navbar when scrolled */}
-              <div
-              className={`hidden md:flex items-center space-x-6 ml-8 text-sm transition-all duration-300 ${isScrolled ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none"}`}
-              >
-                <div className="flex items-center gap-1">
-                  <span className="text-gray-400">Items:</span>
-                  <span className="font-bold">{filteredItems.length}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="text-gray-400">Storage Units:</span>
-                  <span className="font-bold">
-                    {new Set(items.filter((item) => item.storageUnit).map((item) => item.storageUnit)).size}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="text-gray-400">Filtered Value:</span>
-                  <span className="font-bold text-green-500">${filteredValue.toFixed(2)}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <span className="text-gray-400">Total Value:</span>
-                  <span className="font-bold text-green-500">
-                    ${items.reduce((sum, item) => sum + (item.steam_price || 0) * (item.quantity || 1), 0).toFixed(2)}
-                  </span>
-                </div>
+    <>
+      <div className="min-h-screen bg-gray-900 text-white" style={{ maxHeight: "100vh" }}>
+        <header className="sticky top-0 z-50 border-b border-gray-800 bg-gray-950 shadow-md transition-all duration-300">
+          <div className="container mx-auto p-4">
+            <div className="flex items-center justify-between">
+              {/* Left section */}
+              <div className="flex items-center gap-4">
+                <img src="/logo.png" width="35" height="35"></img>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
+                  CS2 Vault
+                </h1>
               </div>
 
-            {/* Right section */}
-            <div className="flex items-center gap-4">
-              {steamId && <UserProfile steamId={steamId} />}
+              {/* Stats in navbar when scrolled */}
+                <div
+                className={`hidden md:flex items-center space-x-6 ml-8 text-sm transition-all duration-300 ${isScrolled ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none"}`}
+                >
+                  <div className="flex items-center gap-1">
+                    <span className="text-gray-400">Items:</span>
+                    <span className="font-bold">{filteredItems.length}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-gray-400">Storage Units:</span>
+                    <span className="font-bold">
+                      {new Set(items.filter((item) => item.storageUnit).map((item) => item.storageUnit)).size}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-gray-400">Filtered Value:</span>
+                    <span className="font-bold text-green-500">${filteredValue.toFixed(2)}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-gray-400">Total Value:</span>
+                    <span className="font-bold text-green-500">
+                      ${items.reduce((sum, item) => sum + (item.steam_price || 0) * (item.quantity || 1), 0).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+
+              {/* Right section */}
+              <div className="flex items-center gap-4">
+                {steamId && <UserProfile steamId={steamId} />}
+              </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
 
-      <main ref={mainRef} className="container mx-auto p-4 flex-grow">
-        {/* Only show stats when not scrolled - with smooth transition */}
-        <div
-          className={`mb-6 transition-all duration-300 ${isScrolled ? "opacity-0 max-h-0 overflow-hidden" : "opacity-100 max-h-40"}`}
-        >
-          <InventoryStats
-            items={items}
-            storageUnits={storageUnits}
-            filteredValue={filteredValue}
-            hideId={true} // Hide the Steam ID box
-          />
-        </div>
-
-        {/* Selected Items Section */}
-        <SelectedItems
-          items={selectedItems}
-          onRemoveItem={handleRemoveSelectedItem}
-          onClearAll={handleClearSelectedItems}
-        />
-
-        <div className="grid gap-6 md:grid-cols-[300px_1fr]">
-          {/* Sticky filters */}
+        <main ref={mainRef} className="container mx-auto p-4 flex-grow">
+          {/* Only show stats when not scrolled - with smooth transition */}
           <div
-            ref={filterRef}
-            className="sticky top-24 self-start max-h-[calc(100vh-120px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900"
+            className={`mb-6 transition-all duration-300 ${isScrolled ? "opacity-0 max-h-0 overflow-hidden" : "opacity-100 max-h-40"}`}
           >
-            <InventoryFilters onFilterChange={setFilters}  storageUnitNames={[]} />
+            <InventoryStats
+              items={items}
+              storageUnits={storageUnits}
+              filteredValue={filteredValue}
+              hideId={true} // Hide the Steam ID box
+            />
           </div>
 
-          <div ref={itemsRef}>
-            {loading ? (
-              <LoadingInventory />
-            ) : (
-              <>
-                <InventoryGrid
-                  items={items}
-                  filters={filters}
-                  onTotalValueChange={handleTotalValueChange}
-                  visibleItems={visibleItems}
-                  onFilteredItemsChange={handleFilteredItemsChange}
-                  onSelectItem={handleSelectItem}
-                  selectedItemIds={selectedItems.map((item) => item.id)}
-                  error={error}
-                />
+          {/* Selected Items Section */}
+          <SelectedItems
+            items={selectedItems}
+            onRemoveItem={handleRemoveSelectedItem}
+            onClearAll={handleClearSelectedItems}
+          />
 
-                {/* Show more button - only if there are more items to show */}
-                {filteredItems.length > 0 && visibleItems < filteredItems.length && (
-                  <div className="mt-6 flex justify-center pb-8">
-                    <Button
-                      onClick={handleShowMore}
-                      variant="outline"
-                      className="gap-2 border-gray-700 bg-gray-800 hover:bg-gray-700"
-                    >
-                      Show More
-                      <ChevronDown className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
-              </>
-            )}
+          <div className="grid gap-6 md:grid-cols-[300px_1fr]">
+            {/* Sticky filters */}
+            <div
+              ref={filterRef}
+              className="sticky top-24 self-start max-h-[calc(100vh-120px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900"
+            >
+              <InventoryFilters onFilterChange={setFilters}  storageUnitNames={[]} />
+            </div>
+
+            <div ref={itemsRef}>
+              {loading ? (
+                <LoadingInventory />
+              ) : (
+                <>
+                  <InventoryGrid
+                    items={items}
+                    filters={filters}
+                    onTotalValueChange={handleTotalValueChange}
+                    visibleItems={visibleItems}
+                    onFilteredItemsChange={handleFilteredItemsChange}
+                    onSelectItem={handleSelectItem}
+                    selectedItemIds={selectedItems.map((item) => item.id)}
+                    error={error}
+                  />
+
+                  {/* Show more button - only if there are more items to show */}
+                  {filteredItems.length > 0 && visibleItems < filteredItems.length && (
+                    <div className="mt-6 flex justify-center pb-8">
+                      <Button
+                        onClick={handleShowMore}
+                        variant="outline"
+                        className="gap-2 border-gray-700 bg-gray-800 hover:bg-gray-700"
+                      >
+                        Show More
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
 
-      {/* Footer to prevent white background when scrolling past content */}
-      <footer className="bg-gray-900 py-6 border-t-2 border-gray-600 pt-2">
-        <div className="container mx-auto pt-3 flex items-center justify-between text-sm text-gray-500">
-          <Link
-              href="https://github.com/maxtmiller"
+        {/* Footer to prevent white background when scrolling past content */}
+        <footer className="bg-gray-900 py-6 border-t-2 border-gray-600 pt-2">
+          <div className="container mx-auto pt-3 flex items-center justify-between text-sm text-gray-500">
+            <Link
+                href="https://github.com/maxtmiller"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-primary transition-colors pl-6"
+                aria-label="GitHub"
+              >
+                <Github className="h-5 w-5" />
+            </Link>
+            <p className="text-center w-full">
+              @ 2025 CS2 Vault • Not affiliated with Valve or Steam
+            </p>
+            <Link
+              href="https://steamcommunity.com/id/LowKey-W-Loki/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-primary transition-colors pl-6"
-              aria-label="GitHub"
+              className="text-muted-foreground hover:text-primary transition-colors pr-6"
+              aria-label="Steam"
             >
-              <Github className="h-5 w-5" />
-          </Link>
-          <p className="text-center w-full">
-            @ 2025 CS2 Vault • Not affiliated with Valve or Steam
-          </p>
-          <Link
-            href="https://steamcommunity.com/id/LowKey-W-Loki/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-muted-foreground hover:text-primary transition-colors pr-6"
-            aria-label="Steam"
-          >
-            <SteamIcon className="h-5 w-5" />
-          </Link>
-        </div>
-      </footer>
-    </div>
+              <SteamIcon className="h-5 w-5" />
+            </Link>
+          </div>
+        </footer>
+      </div>
+    </>
   )
 }
