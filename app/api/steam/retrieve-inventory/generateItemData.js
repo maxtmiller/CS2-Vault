@@ -45,27 +45,28 @@ function findFloatRange(float) {
     return null;
 }
 
-// const full_item_data = JSON.parse(fs.readFileSync('public/item_data.json', 'utf8'));
-// const full_price_data = JSON.parse(fs.readFileSync('public/price_data.json', 'utf8'));
-// const full_skin_data = JSON.parse(fs.readFileSync('public/skins_data.json', 'utf8'));
+const rootFolder = process.cwd();
+const full_item_data_filePath = path.join(rootFolder, 'public/item_data.json');
+const full_price_data_filePath = path.join(rootFolder, 'public/price_data.json');
+const full_skin_data_filePath = path.join(rootFolder, 'public/skins_data.json');
+const full_item_data = JSON.parse(fs.readFileSync(full_item_data_filePath, 'utf8'));
+const full_price_data = JSON.parse(fs.readFileSync(full_price_data_filePath, 'utf8'));
+const full_skin_data = JSON.parse(fs.readFileSync(full_skin_data_filePath, 'utf8'));
 
-// const full_item_data = getItemData()
-// const full_price_data = getPriceData()
-// const full_skin_data = getSkinData()
 
-let full_item_data;
-let full_price_data;
-let full_skin_data;
+// let full_item_data;
+// let full_price_data;
+// let full_skin_data;
 
-async function fetchDataOnce() {
-    [full_item_data, full_price_data, full_skin_data] = await Promise.all([
-        getItemData(),
-        getPriceData(),
-        getSkinData(),
-    ]);
-}
+// async function fetchDataOnce() {
+//     [full_item_data, full_price_data, full_skin_data] = await Promise.all([
+//         getItemData(),
+//         getPriceData(),
+//         getSkinData(),
+//     ]);
+// }
   
-fetchDataOnce();
+// fetchDataOnce();
 
 
 async function generateInspectLinkFromObject(props) {

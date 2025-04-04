@@ -1,4 +1,4 @@
-import { promises as fs } from 'fs';
+import fs from 'fs';
 import path from 'path';
 import protobuf from 'protobufjs';
 import CRC32 from 'crc-32';
@@ -66,17 +66,27 @@ interface Sticker {
     rotation?: number;
 }
 
-let full_price_data: PriceData;
-let full_skin_data: SkinData;
+const rootFolder = process.cwd();
+const full_price_data_filePath = path.join(rootFolder, 'public/price_data.json');
+const full_skin_data_filePath = path.join(rootFolder, 'public/skins_data.json');
+const full_price_data_unformatted = JSON.parse(fs.readFileSync(full_price_data_filePath, 'utf8'));
+const full_skin_data_unformatted = JSON.parse(fs.readFileSync(full_skin_data_filePath, 'utf8'));
 
-async function fetchDataOnce() {
-    [full_price_data, full_skin_data] = await Promise.all([
-      getPriceData(),
-      getSkinData(),
-    ]);
-}
+const full_skin_data: { [key: string]: SkinData } = full_skin_data_unformatted;
+const full_price_data: PriceData = full_price_data_unformatted;
+
+
+// let full_price_data: PriceData;
+// let full_skin_data: SkinData;
+
+// async function fetchDataOnce() {
+//     [full_price_data, full_skin_data] = await Promise.all([
+//       getPriceData(),
+//       getSkinData(),
+//     ]);
+// }
   
-fetchDataOnce();
+// fetchDataOnce();
 
 async function generateInspectLinkFromObject(props: ItemData): Promise<string | null> {
     const previewLink = "steam://rungame/730/76561202255233023/+csgo_econ_action_preview%20";
@@ -176,18 +186,6 @@ function getRarityNum(rarity_name: string): number | null {
 export async function getSuggestionItemInfo(
     items: ResponseData,
 ): Promise<ItemData | null> {
-
-    // const skinsDatafilePath = path.join(process.cwd(), './public/skins_data.json'); // Adjust path if needed
-    // const skinsDatafileContents = await fs.readFile(skinsDatafilePath, 'utf-8');
-    // const skinsData = JSON.parse(skinsDatafileContents);
-
-    // const priceDatafilePath = path.join(process.cwd(), './public/price_data.json'); // Adjust path if needed
-    // const priceDatafileContents = await fs.readFile(priceDatafilePath, 'utf-8');
-    // const priceData = JSON.parse(priceDatafileContents);
-
-    // const full_skin_data: { [key: string]: SkinData } = skinsData;
-    // const full_price_data: PriceData = priceData;
-
 
     const item = Object.values(full_skin_data).find(item => item.name === items.name);
 
