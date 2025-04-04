@@ -83,7 +83,7 @@ export async function getSuggestionGemini(data: { items: any[], weapon_preferenc
             const cur = ` a ${item.name} in ${item.wear} that costs $${item.price},`
             prompt += cur;
         }
-        prompt += "suggest at least 4 items that fit with my loadout with similar colours and a price."
+        prompt += "suggest at least 4 items that fit with my loadout with the same colours and a similar price."
 
         prompt += "I want suggestions for the following item types only: "
         for (const item of data.weapon_preferences) {
@@ -100,6 +100,7 @@ export async function getSuggestionGemini(data: { items: any[], weapon_preferenc
             Give items in the same price range as the ones inputted, DO NOT provide an item that is much more expensive unless it is a knife or glove.
             DO NOT include the wear in the item name, do not suggest stattrak items.
             For knives and gloves, remember the names have a star in front, like "★ Karambit | Fade" and "★ Moto Gloves | Spearmint"
+            Do not include doppler phases in the name or any other specific details, like souvenir or stattrak just the name of the item.
 
             ## Style Guide
             Respond in following the exact json specification below for each item suggested, and put all the items into an array that you will return
