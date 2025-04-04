@@ -96,7 +96,7 @@ export function Inventory({ steamId }: { steamId: string | null }) {
         const data = await fetchInventory(steamId)
         const items = data.item_data
 
-        console.log("Inventory.tsx: Fetched inventory data:", items)
+        console.log("Inventory.tsx: Fetched inventory data:", data)
 
         setError(data.error)
 
