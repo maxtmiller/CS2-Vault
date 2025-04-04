@@ -9,6 +9,7 @@ import { UserProfile } from "@/components/user-profile"
 import { fetchInventory, type InventoryItem } from "@/lib/steam-api"
 import { Button } from "@/components/ui/button"
 import { ChevronDown, Github, Linkedin, Instagram, Mail } from "lucide-react"
+import { SteamIcon } from "@/components/steam-icon"
 import { SelectedItems } from "@/components/selected-items"
 import Link from "next/link"
 
@@ -16,6 +17,7 @@ import Link from "next/link"
 
 export function Inventory({ steamId }: { steamId: string | null }) {
   const [items, setItems] = useState<InventoryItem[]>([])
+  const [storageUnits, setStorageUnits] = useState<number>()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [retryCount, setRetryCount] = useState(0)
@@ -82,11 +84,14 @@ export function Inventory({ steamId }: { steamId: string | null }) {
       setLoading(true)
       try {
         const data = await fetchInventory(steamId)
-        setItems(data)
-        setFilteredItems(data)
+        const items = data.item_data
+
+        setStorageUnits(data.storage_units)
+        setItems(items)
+        setFilteredItems(items)
 
         // Calculate initial filtered value (all items)
-        const initialValue = data.reduce((sum, item) => sum + (item.steam_price || 0) * (item.quantity || 1), 0)
+        const initialValue = items.reduce((sum, item) => sum + (item.steam_price || 0) * (item.quantity || 1), 0)
         setFilteredValue(initialValue)
       } catch (error) {
         console.error("Error loading inventory:", error)
@@ -97,58 +102,6 @@ export function Inventory({ steamId }: { steamId: string | null }) {
 
     loadInventory()
   }, [steamId])
-
-  // const loadInventory = async (steamId: string) => {
-  //   setLoading(true)
-  //   setError(null)
-
-  //   // Create a timeout promise that rejects after 15 seconds
-  //   const timeoutPromise = new Promise<never>((_, reject) => {
-  //     setTimeout(() => reject(new Error("Loading inventory timed out")), 15000)
-  //   })
-
-  //   try {
-  //     // Race between the actual fetch and the timeout
-  //     const inventoryData = await Promise.race([fetchInventory(steamId), timeoutPromise])
-
-  //     if (Array.isArray(inventoryData) && inventoryData.length > 0) {
-  //       setItems(inventoryData)
-  //       setFilteredItems(inventoryData)
-  //       setLoading(false)
-  //       // Reset retry count on success
-  //       setRetryCount(0)
-  //       // Store success timestamp in localStorage
-  //       localStorage.setItem("inventory_last_loaded", Date.now().toString())
-  //     } else {
-  //       throw new Error("Invalid inventory data received")
-  //     }
-  //   } catch (err) {
-  //     console.error("Error loading inventory:", err)
-  //     setError(`Failed to load inventory: ${err instanceof Error ? err.message : "Unknown error"}`)
-  //     setLoading(false)
-
-  //     // Auto-retry logic (max 3 attempts)
-  //     if (retryCount < 3) {
-  //       setRetryCount((prev) => prev + 1)
-  //       setTimeout(() => loadInventory(steamId || ""), 2000) // Retry after 2 seconds
-  //     }
-  //   }
-  // }
-
-  // // Handle manual retry
-  // const handleRetry = () => {
-  //   setRetryCount(0)
-  //   loadInventory(steamId || "")
-  // }
-
-  // useEffect(() => {
-  //   loadInventory(steamId || "")
-
-  //   // Cleanup function
-  //   return () => {
-  //     // Any cleanup needed
-  //   }
-  // }, [])
 
   // Handle scroll events to detect when user has scrolled
   useEffect(() => {
@@ -296,6 +249,7 @@ export function Inventory({ steamId }: { steamId: string | null }) {
         >
           <InventoryStats
             items={items}
+            storageUnits={storageUnits}
             filteredValue={filteredValue}
             hideId={true} // Hide the Steam ID box
           />
@@ -358,7 +312,7 @@ export function Inventory({ steamId }: { steamId: string | null }) {
               href="https://github.com/maxtmiller"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-primary transition-colors"
+              className="text-muted-foreground hover:text-primary transition-colors pl-6"
               aria-label="GitHub"
             >
               <Github className="h-5 w-5" />
@@ -367,13 +321,13 @@ export function Inventory({ steamId }: { steamId: string | null }) {
             @ 2025 CS2 Vault • Not affiliated with Valve or Steam
           </p>
           <Link
-            href="https://www.linkedin.com/in/maximiliantmiller/"
+            href="https://steamcommunity.com/id/LowKey-W-Loki/"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-muted-foreground hover:text-primary transition-colors"
-            aria-label="LinkedIn"
+            className="text-muted-foreground hover:text-primary transition-colors pr-6"
+            aria-label="Steam"
           >
-            <Linkedin className="h-5 w-5" />
+            <SteamIcon className="h-5 w-5" />
           </Link>
         </div>
       </footer>

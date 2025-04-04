@@ -48,7 +48,7 @@ export interface InventoryItem {
   reason?: string | null
 }
 
-export async function fetchInventory(steamId: string): Promise<InventoryItem[]> {
+export async function fetchInventory(steamId: string): Promise<{ item_data: InventoryItem[], storage_units: number }> {
   console.log(`Fetching inventory for Steam ID: ${steamId}`)
 
   // Check if we have cached inventory data
@@ -56,7 +56,7 @@ export async function fetchInventory(steamId: string): Promise<InventoryItem[]> 
   if (cachedData) {
     const parsedInventoryData = JSON.parse(cachedData)
     const data = JSON.parse(parsedInventoryData.data)
-    return data
+    return { item_data: data, storage_units: parsedInventoryData.storage_units }
   }
 
   try {
@@ -80,7 +80,8 @@ export async function fetchInventory(steamId: string): Promise<InventoryItem[]> 
         "inventory_data",
         JSON.stringify({
           timestamp: Date.now(),
-          data: JSON.stringify(response),
+          data: JSON.stringify(response.item_data),
+          storage_units: response.storage_units,
         }),
       )
       return response
@@ -94,7 +95,8 @@ export async function fetchInventory(steamId: string): Promise<InventoryItem[]> 
         "inventory_data",
         JSON.stringify({
           timestamp: Date.now(),
-          data: JSON.stringify(response),
+          data: JSON.stringify(response.item_data),
+          storage_units: response.storage_units,
         }),
       )
       return response
@@ -110,7 +112,7 @@ export async function fetchInventory(steamId: string): Promise<InventoryItem[]> 
       }
       return response
     } catch (error) {
-      return getMockInventoryItems()
+      return { item_data: getMockInventoryItems(), storage_units: 0}
     }
   }
 

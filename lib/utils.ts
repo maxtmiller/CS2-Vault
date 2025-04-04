@@ -36,9 +36,10 @@ export async function fetchAllInventoryData(authData: string, loginType: number)
     }
 
     const data = await response.json()
+    const storage_units = data.result.storage_units.length
     const item_data = JSON.parse(data.result.item_data)
 
-    return item_data
+    return { item_data, storage_units }
   } catch (error) {
     console.error("Error fetching inventory:", error);
     return [];
@@ -46,7 +47,7 @@ export async function fetchAllInventoryData(authData: string, loginType: number)
 }
 
 
-export async function fetchVisibleInventoryData(steamId: string): Promise<InventoryItem[]> {
+export async function fetchVisibleInventoryData(steamId: string): Promise<any | null> {
   try {
     // Use our proxy endpoint instead of calling Steam directly
     const response = await fetch(`/api/steam/inventory?steamid=${steamId}`, {
@@ -63,7 +64,7 @@ export async function fetchVisibleInventoryData(steamId: string): Promise<Invent
     const data = await response.json()
     const result = data.processedData.item_data
 
-    return result
+    return { item_data: result, storage_units: 0 }
   } catch (error) {
     console.error("Error fetching inventory:", error)
     return []

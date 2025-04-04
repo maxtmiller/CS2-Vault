@@ -5,11 +5,13 @@ import type { InventoryItem } from "@/lib/steam-api"
 export function InventoryStats({
   steamId,
   items = [],
+  storageUnits = 0,
   filteredValue = 0,
   hideId = false, // Add this prop to optionally hide the Steam ID
 }: {
   steamId?: string | null
   items?: InventoryItem[]
+  storageUnits?: number
   filteredValue?: number
   hideId?: boolean
 }) {
@@ -17,7 +19,7 @@ export function InventoryStats({
   const itemCount = items.length
 
   // Count storage units
-  const storageUnitCount = new Set(items.filter((item) => item.storageUnit).map((item) => item.storageUnit)).size
+  const storageUnitCount = storageUnits || 0
 
   // Calculate total value (Steam prices)
   const totalValue = items.reduce((sum, item) => sum + (item.steam_price || 0) * (item.quantity || 1), 0).toFixed(2)
@@ -35,7 +37,7 @@ export function InventoryStats({
         <p className="mt-1 text-2xl font-bold">{itemCount}</p>
       </div>
       <div className="rounded-lg border border-gray-800 bg-gray-950 p-4">
-        <h3 className="text-sm font-medium text-gray-400">Storage Units</h3>
+        <h3 className="text-sm font-medium text-gray-400">Storage Units Loaded</h3>
         <p className="mt-1 text-2xl font-bold">{storageUnitCount}</p>
       </div>
       <div className="rounded-lg border border-gray-800 bg-gray-950 p-4">
