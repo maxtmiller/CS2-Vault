@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { getSuggestion } from './getSuggestion';
+import { getSuggestionCohere, getSuggestionGemini } from './getSuggestion';
 import { getSuggestionItemInfo, ItemData } from './getItemData';
 
 export interface ResponseData {
@@ -15,6 +15,7 @@ async function processJsonData(items: ResponseData[]): Promise<ItemData[]> {
     // Loop through each item in skins_data.json
     for (const item of items) {
         const result = await getSuggestionItemInfo(item);
+        console.log(result);
         if (result) {
             results.push(result);
         }
@@ -26,7 +27,7 @@ async function processJsonData(items: ResponseData[]): Promise<ItemData[]> {
 export async function POST(request: NextRequest) {
     try {
         const items = await request.json();
-        const results = await getSuggestion(items);
+        const results = await getSuggestionGemini(items);
         const inventory = await processJsonData(results);
         return NextResponse.json(inventory);
     } catch (error) {

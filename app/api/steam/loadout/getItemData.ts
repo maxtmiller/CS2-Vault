@@ -146,7 +146,7 @@ async function generateInspectLinkFromObject(props: ItemData): Promise<string | 
 
 function getFloatRange(wear_name: string): FloatRange | null {
     const floatRanges: { min: number; max: number; name: string }[] = [
-        { min: 0.00, max: 0.07, name: 'Factory New' },
+        { min: 0.01, max: 0.07, name: 'Factory New' },
         { min: 0.07, max: 0.15, name: 'Minimal Wear' },
         { min: 0.15, max: 0.38, name: 'Field-Tested' },
         { min: 0.38, max: 0.45, name: 'Well-Worn' },
@@ -196,7 +196,7 @@ export async function getSuggestionItemInfo(
     let floatRange = getFloatRange(items.wear_name);
     const rarityNum = getRarityNum(item.rarity.name);
 
-    if (!floatRange?.min || rarityNum === null) {
+    if (!floatRange?.min  || rarityNum === null) {
         return null;
     }
 
