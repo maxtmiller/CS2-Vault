@@ -1,7 +1,6 @@
 import type { InventoryItem } from "@/lib/steam-api"
 import CRC32 from 'crc-32'
 import protobuf from 'protobufjs'
-import fs from 'fs'
 import path from 'path'
 import { ItemData, SkinData, PriceData } from "@/lib/data-loader"
 import { fetchData, getFullItemData, getFullPriceData, getFullSkinData } from "@/lib/data-loader"
@@ -35,49 +34,6 @@ interface InspectItem {
     stickers?: CS2Sticker[];
     is_stattrak?: boolean;
     is_souvenir?: boolean;
-}
-
-interface Action {
-    link: string;
-    name: string;
-  }
-  
-  interface Description {
-    type?: string;
-    value: string;
-    color?: string;
-    name: string;
-  }
-  
-  interface Tag {
-    category: string;
-    internal_name: string;
-    localized_category_name: string;
-    localized_tag_name: string;
-    color?: string;
-  }
-  
-interface SkinItem {
-    appid: number;
-    classid: string;
-    instanceid: string;
-    currency: number;
-    background_color: string;
-    icon_url: string;
-    descriptions: Description[];
-    tradable: number;
-    actions?: Action[];
-    name: string;
-    name_color: string;
-    type: string;
-    market_name: string;
-    market_hash_name: string;
-    market_actions?: Action[];
-    commodity: number;
-    market_tradable_restriction: number;
-    market_marketable_restriction: number;
-    marketable: number;
-    tags: Tag[];
 }
 
 

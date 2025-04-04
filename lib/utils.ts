@@ -2,6 +2,7 @@ import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { InventoryItem } from "@/lib/steam-api"
 
+
 export async function fetchInventoryFromJSON(steamId: string): Promise<InventoryItem[]> {
   console.log("Fetching inventory from mock data...");
 

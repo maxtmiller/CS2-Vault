@@ -1,7 +1,6 @@
 import fs from "fs"
 import path from "path"
 
-// Define types for your data structures
 
 interface Weapon {
   id: string;
@@ -146,12 +145,12 @@ export interface PriceData {
   }
 }
 
-// Cache the data to avoid reading from disk on every request
+
 let itemDataCache: ItemData | null = null
 let priceDataCache: PriceData | null = null
 let skinDataCache: SkinData | null = null
 
-// Function to load data with proper error handling
+
 export function loadDataFromBackup<T>(filename: string): T {
   try {
     const filePath = path.join(process.cwd(), "public", "backup", filename)
@@ -253,15 +252,16 @@ export function getFullSkinData() {
 
 export async function fetchData() {
   try {
-      await fetchURLData(); // Try fetching the main data
+      await fetchURLData();
       console.log("Fetched main data successfully.");
   } catch (error) {
       console.error("Error fetching main data, attempting backup...", error);
       try {
-          await fetchBackupData(); // If main data fails, fetch backup data
+          await fetchBackupData();
           console.log("Fetched backup data successfully.");
       } catch (backupError) {
           console.error("Error fetching backup data as well.", backupError);
+          return [];
       }
   }
 }

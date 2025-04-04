@@ -458,8 +458,6 @@ export function InventoryGrid({
                     </p>
                       {item.custom_name && <p className="text-sm text-yellow-400">Name Tag: {item.custom_name}</p>}
                       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                        {/* <p className="text-gray-300">Type:</p>
-                        <p className="text-white">{item.type || "Other"}</p> */}
 
                         <p className="text-gray-300">Rarity:</p>
                         <p className="text-white">{item.rarity_name}</p>
