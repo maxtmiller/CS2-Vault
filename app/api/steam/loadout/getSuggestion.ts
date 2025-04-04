@@ -80,7 +80,7 @@ export async function getSuggestionGemini(data: { items: any[], weapon_preferenc
             I have the following items: 
         `;
         for (const item of data.items) {
-            const cur = ` a ${item.name} in ${item.wear} that costs $${item.price},`
+            const cur = ` a ${item.name} in ${item.wear} that costs $${item.price} with image ${item.image},`
             prompt += cur;
         }
         prompt += "suggest at least 4 items that fit with my loadout with the same colours and a similar price."

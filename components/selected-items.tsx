@@ -73,7 +73,8 @@ interface SelectedItemsProps {
         const item_schema = {
             name: item.name,
             wear: item.wear_name,
-            price: item.steam_price
+            price: item.steam_price,
+            image: item.icon_url,
         };
         item_data.push(item_schema);
       }
