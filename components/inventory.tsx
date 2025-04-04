@@ -71,6 +71,18 @@ export function Inventory({ steamId }: { steamId: string | null }) {
     storageUnits: {},
   })
 
+  const handleLogout = () => {
+    localStorage.removeItem("login_type")
+    localStorage.removeItem("inventory_data")
+    fetch(`/api/auth/logout?steamid=${steamId}`, { method: "POST" })
+      .then(() => {
+        window.location.replace("/")
+      })
+      .catch((error) => {
+        console.error("Logout error:", error)
+      })
+  }
+
   // Fetch inventory data
   useEffect(() => {
     async function loadInventory() {
@@ -84,6 +96,8 @@ export function Inventory({ steamId }: { steamId: string | null }) {
         const data = await fetchInventory(steamId)
         const items = data.item_data
 
+        console.log("Inventory.tsx: Fetched inventory data:", items)
+
         setError(data.error)
 
         setStorageUnits(data.storage_units)
@@ -93,6 +107,12 @@ export function Inventory({ steamId }: { steamId: string | null }) {
         // Calculate initial filtered value (all items)
         const initialValue = items.reduce((sum, item) => sum + (item.steam_price || 0) * (item.quantity || 1), 0)
         setFilteredValue(initialValue)
+        
+        if (!data.success) {
+          setTimeout(() => {
+            handleLogout();
+          }, 3000);
+        }
       } catch (error) {
         console.error("Error loading inventory:", error)
       } finally {

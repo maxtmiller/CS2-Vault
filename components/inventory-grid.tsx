@@ -312,13 +312,13 @@ export function InventoryGrid({
               <p className="text-lg">Error Retrieving Inventory Data</p>
               <p className="text-sm mt-2">Try Logining in again / Check if you have a CS2 Game Session</p>
               </div>
-            )};
+            )}
           {error === null && (
             <div className="flex flex-col items-center justify-center py-12 text-gray-400">
               <p className="text-lg">No items match your filters</p>
               <p className="text-sm mt-2">Try adjusting your filter criteria</p>
               </div>
-            )};
+            )}
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
