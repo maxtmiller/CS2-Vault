@@ -357,7 +357,7 @@ export function InventoryGrid({
                       {item.name?.includes('|') && (
                         <p className="text-xxs text-gray-300"> 
                         {item.name?.split('|')[0]
-                          ? item.name?.split('|')[0].includes('Gloves')
+                          ? item.type === "Gloves" || item.type === "Knives"
                             ? item.name?.split('|')[0].split(' ')[0] + ' ' + item.name?.split('|')[0].split(' ')[2]
                             : item.category === 'agent'
                               ? item.name?.split('|')[0].split(' ')[0] + ' ' + item.name?.split('|')[0].split(' ')[1]
@@ -382,7 +382,7 @@ export function InventoryGrid({
                                   : item.name?.split(' ')[0] + " Collection"
                               : item.category === 'sticker'
                                 ? item.name?.split('|')[2]
-                                : item.category?.charAt(0).toUpperCase()}
+                                : item.type}
                         </p>
                       )}
 
