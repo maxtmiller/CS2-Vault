@@ -36,11 +36,7 @@ export async function fetchAllInventoryData(authData: string, loginType: number)
     }
 
     const data = await response.json()
-
-    console.log("Fetched inventory data:", data)
     const item_data = JSON.parse(data.result.item_data)
-    
-    console.log(typeof item_data)
 
     return item_data
   } catch (error) {

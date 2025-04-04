@@ -64,37 +64,6 @@ export async function GET(request: NextRequest) {
         // If validation fails, continue to cookie check
       }
     }
-    // Check if we have a session cookie as fallback
-    // const cookieStore = await cookies()
-    // const sessionCookie = cookieStore.get("steam_session")
-
-    // console.log("line 67: ", sessionCookie)
-
-    // if (sessionCookie && sessionCookie.value !== "true") {
-    //   try {
-    //     const sessionData = JSON.parse(sessionCookie.value)
-    //     console.log("line 63:", sessionData)
-    //     console.log(sessionCookie)
-    //     console.log(cookieStore.get("steam_session"))
-
-    //     // Check if the session is expired
-    //     if (sessionData.expiresAt && sessionData.expiresAt < Date.now()) {
-    //       // Session expired, clear the cookie
-    //       cookieStore.delete("steam_session")
-    //       return NextResponse.json({ loggedIn: false, reason: "expired" })
-    //     }
-
-    //     return NextResponse.json({
-    //       loggedIn: true,
-    //       responseStatus: "loggedIn",
-    //       session: sessionData,
-    //     })
-    //   } catch (error) {
-    //     console.error("Error parsing session cookie:", error)
-    //     // Invalid cookie, clear it
-    //     cookieStore.delete("steam_session")
-    //   }
-    // }
 
     // No active session found
     return NextResponse.json({ loggedIn: false })

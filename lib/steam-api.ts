@@ -81,7 +81,15 @@ export async function fetchInventory(steamId: string): Promise<InventoryItem[]> 
     }
   } catch (error) {
     console.error("Error fetching inventory:")
-    return getMockInventoryItems()
+    try {
+      const response = await fetchVisibleInventoryData(steamId)
+      if (!response) {
+        throw new Error(`API error: No inventory data found`)
+      }
+      return response
+    } catch (error) {
+      return getMockInventoryItems()
+    }
   }
 
   // try {
@@ -102,25 +110,6 @@ export async function fetchInventory(steamId: string): Promise<InventoryItem[]> 
   //   return result
   // } catch {
   //   console.error("Error fetching inventory:")
-  //   return getMockInventoryItems()
-  // }
-
-  // try {
-  //   // Use our proxy endpoint instead of calling Steam directly
-  //   const response = await fetch(`/api/steam/inventory?steamid=${steamId}`, {
-  //     // Add cache: 'no-store' to prevent caching
-  //   })
-
-  //   const data = await response.json()
-  //   const result = data.processedData.item_data
-
-  //   // Process the Steam inventory data
-  //   return result
-  // } catch (error) {
-  //   console.error("Error fetching inventory:", error)
-
-  //   // For development/demo purposes, fall back to mock data if the API call fails
-  //   console.log("Falling back to mock data")
   //   return getMockInventoryItems()
   // }
 }

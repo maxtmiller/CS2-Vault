@@ -105,7 +105,7 @@ export function UserProfile({ steamId }: { steamId: string }) {
             className="object-cover"
             />
         </Link>
-        <Button onClick={handleLogout} size="sm" className="bg-red-600 text-white hover:bg-red-700">
+        <Button onClick={handleLogout} className="bg-red-600 text-white hover:bg-red-700">
             Logout
         </Button>
     </div>

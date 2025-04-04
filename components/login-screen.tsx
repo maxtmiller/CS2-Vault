@@ -337,13 +337,13 @@ export function LoginScreen() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="steam" className="w-full">
-            <TabsList className="grid w-full grid-cols-3 bg-gray-700">
+            <TabsList className="grid w-full grid-cols-2 bg-gray-700">
               <TabsTrigger value="steam" className="data-[state=active]:bg-gray-900">
                 Steam
               </TabsTrigger>
-              <TabsTrigger value="qr" className="data-[state=active]:bg-gray-900">
+              {/* <TabsTrigger value="qr" className="data-[state=active]:bg-gray-900">
                 QR Code
-              </TabsTrigger>
+              </TabsTrigger> */}
               <TabsTrigger value="jwt" className=" disabled data-[state=active]:bg-gray-900">
                 JWT Token
               </TabsTrigger>
