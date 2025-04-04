@@ -18,7 +18,7 @@ import Link from "next/link"
 export function Inventory({ steamId }: { steamId: string | null }) {
   const [items, setItems] = useState<InventoryItem[]>([])
   const [storageUnits, setStorageUnits] = useState<number>()
-  const [error, setError] = useState<string | null>()
+  const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [filteredValue, setFilteredValue] = useState(0)
   const [visibleItems, setVisibleItems] = useState(24)
@@ -304,7 +304,7 @@ export function Inventory({ steamId }: { steamId: string | null }) {
                   onFilteredItemsChange={handleFilteredItemsChange}
                   onSelectItem={handleSelectItem}
                   selectedItemIds={selectedItems.map((item) => item.id)}
-                  error={null}
+                  error={error}
                 />
 
                 {/* Show more button - only if there are more items to show */}
