@@ -186,8 +186,10 @@ async function getItemInfoByDefIndex(old_data) {
 
     if (old_data.def_index ===  1201 || (old_data.def_index === 36 && old_data.paint_index === 125)) return null;
 
+    if (old_data.paint_index === 0) old_data.paint_index = 1001;
+
     let item;
-    if (old_data.paint_wear) {
+    if (old_data.hasOwnProperty('paint_index')) {
         item = Object.values(full_skin_data).find(item => item.paint_index === old_data.paint_index.toString() && item.weapon.weapon_id === old_data.def_index);
     } else if (old_data.sticker_id) {
         item = Object.entries(full_item_data).find(([key]) => key.endsWith(`sticker-${old_data.sticker_id}`))?.[1];
@@ -200,7 +202,7 @@ async function getItemInfoByDefIndex(old_data) {
     }
 
     let price;
-    if (old_data.paint_wear) {
+    if (old_data.hasOwnProperty('paint_index')) {
         let title;
         if (old_data.is_stattrak) {
             title = `StatTrak™ ${item.name} (${old_data.wear_name})`;
@@ -235,14 +237,14 @@ async function getItemInfoByDefIndex(old_data) {
     const customType = item.id.split("-")[0].replace(/^./, (c) => c.toUpperCase());
     
     let inspect_link;
-    if (old_data.paint_wear) {
+    if (old_data.hasOwnProperty('paint_index')) {
         inspect_link = await generateInspectLinkFromObject(old_data);
     } else {
         inspect_link = null;
     }
 
     let CSFloat;
-    if (old_data.paint_wear) {
+    if (old_data.hasOwnProperty('paint_index')) {
         let category;
         if (old_data.is_souvenir == true) {
             category = 3;
@@ -260,7 +262,7 @@ async function getItemInfoByDefIndex(old_data) {
     }
 
     let SteamMarket;
-    if (old_data.paint_wear) {
+    if (old_data.hasOwnProperty('paint_index')) {
         let encodedString;
         if (old_data.is_souvenir == true) {
             encodedString = encodeURIComponent(`Souvenir ${item.name} (${old_data.wear_name})`)
