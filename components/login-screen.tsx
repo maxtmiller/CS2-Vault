@@ -234,10 +234,10 @@ export function LoginScreen() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 p-4 text-white">
       <div className="mb-8 text-center">
-        <div className="flex justify-center items-center pb-5">
-          <img src="/logo.png" width="150" height="150" alt="Logo" />
+        <div className="flex justify-center items-center pb-4">
+          <img src="/logo.png" width="125" height="125" alt="Logo" />
         </div>
-        <h1 className="mb-2 text-4xl font-bold">CS2 Vault Viewer</h1>
+        <h1 className="mb-2 text-4xl font-bold">CS2 Vault</h1>
         <p className="text-gray-300">Your CS2 Inventory, Simplified and Enhanced.</p>
       </div>
 
