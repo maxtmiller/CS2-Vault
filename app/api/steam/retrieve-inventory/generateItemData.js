@@ -530,7 +530,7 @@ export async function initializeCSGOInventory(authData, loginType) {
 
         client.on('error', (err) => {
             console.error('Steam login error:', err);
-            reject({ success: false, err} );
+            reject({ success: false, err, item_data: [], steamID: null, storage_units: []});
         });
     });
 }
