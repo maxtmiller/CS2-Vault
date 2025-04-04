@@ -48,6 +48,8 @@ export function UserProfile({ steamId }: { steamId: string }) {
   }, [steamId])
 
   const handleLogout = () => {
+    localStorage.removeItem("login_type")
+    localStorage.removeItem("inventory_data")
     fetch(`/api/auth/logout?steamid=${steamId}`, { method: "POST" })
       .then(() => {
         window.location.replace("/")
@@ -105,7 +107,7 @@ export function UserProfile({ steamId }: { steamId: string }) {
             className="object-cover"
             />
         </Link>
-        <Button onClick={handleLogout} className="bg-red-600 text-white hover:bg-red-700">
+        <Button onClick={handleLogout} className="bg-red-600 text-white hover:bg-red-700 rounded-full">
             Logout
         </Button>
     </div>

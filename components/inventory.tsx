@@ -8,8 +8,10 @@ import { LoadingInventory } from "@/components/loading-inventory"
 import { UserProfile } from "@/components/user-profile"
 import { fetchInventory, type InventoryItem } from "@/lib/steam-api"
 import { Button } from "@/components/ui/button"
-import { ChevronDown } from "lucide-react"
+import { ChevronDown, Github, Linkedin, Instagram, Mail } from "lucide-react"
 import { SelectedItems } from "@/components/selected-items"
+import Link from "next/link"
+
 
 
 export function Inventory({ steamId }: { steamId: string | null }) {
@@ -246,8 +248,9 @@ export function Inventory({ steamId }: { steamId: string | null }) {
           <div className="flex items-center justify-between">
             {/* Left section */}
             <div className="flex items-center gap-4">
+              <img src="/logo.png" width="35" height="35"></img>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-                CS2 Inventory Viewer
+                CS2 Vault
               </h1>
             </div>
 
@@ -349,11 +352,32 @@ export function Inventory({ steamId }: { steamId: string | null }) {
       </main>
 
       {/* Footer to prevent white background when scrolling past content */}
-      <footer className="bg-gray-900 py-6 border-t-2 border-black pt-2">
-        <div className="container mx-auto pt-4 text-center text-gray-500 text-sm">
-          <p>CS2 Inventory Viewer • Not affiliated with Valve or Steam</p>
+      <footer className="bg-gray-900 py-6 border-t-2 border-gray-600 pt-2">
+        <div className="container mx-auto pt-3 flex items-center justify-between text-sm text-gray-500">
+          <Link
+              href="https://github.com/maxtmiller"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-primary transition-colors"
+              aria-label="GitHub"
+            >
+              <Github className="h-5 w-5" />
+          </Link>
+          <p className="text-center w-full">
+            @ 2025 CS2 Vault • Not affiliated with Valve or Steam
+          </p>
+          <Link
+            href="https://www.linkedin.com/in/maximiliantmiller/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-muted-foreground hover:text-primary transition-colors"
+            aria-label="LinkedIn"
+          >
+            <Linkedin className="h-5 w-5" />
+          </Link>
         </div>
       </footer>
+
     </div>
   )
 }

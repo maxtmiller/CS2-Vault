@@ -326,7 +326,7 @@ export function LoginScreen() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 p-4 text-white">
       <div className="mb-8 text-center">
-        <h1 className="mb-2 text-4xl font-bold">CS2 Inventory Viewer</h1>
+        <h1 className="mb-2 text-4xl font-bold">CS2 Vault Viewer</h1>
         <p className="text-gray-300">View all your CS2 items including those in storage units</p>
       </div>
 

@@ -44,8 +44,10 @@ body {
   * {
     @apply border-border;
   }
+  * {
+    @apply rounded-lg;
+  }
   body {
     @apply bg-background text-foreground;
   }
 }
-

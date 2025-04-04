@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'PixelPerfect',
+  title: 'CS2Vault',
   description: 'Platform to evalute your CS2 Inventory',
   icons: {
     icon: [

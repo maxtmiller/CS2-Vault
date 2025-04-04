@@ -51,6 +51,14 @@ export interface InventoryItem {
 export async function fetchInventory(steamId: string): Promise<InventoryItem[]> {
   console.log(`Fetching inventory for Steam ID: ${steamId}`)
 
+  // Check if we have cached inventory data
+  const cachedData = localStorage.getItem("inventory_data")
+  if (cachedData) {
+    const parsedInventoryData = JSON.parse(cachedData)
+    const data = JSON.parse(parsedInventoryData.data)
+    return data
+  }
+
   try {
     const loginInfo = localStorage.getItem("login_type")
     if (loginInfo === null) {
@@ -68,6 +76,13 @@ export async function fetchInventory(steamId: string): Promise<InventoryItem[]> 
       if (!response) {
         throw new Error(`API error: No inventory data found`)
       }
+      localStorage.setItem(
+        "inventory_data",
+        JSON.stringify({
+          timestamp: Date.now(),
+          data: JSON.stringify(response),
+        }),
+      )
       return response
     }  else if (type === "steam") {
 
@@ -75,6 +90,13 @@ export async function fetchInventory(steamId: string): Promise<InventoryItem[]> 
       if (!response) {
         throw new Error(`API error: No inventory data found`)
       }
+      localStorage.setItem(
+        "inventory_data",
+        JSON.stringify({
+          timestamp: Date.now(),
+          data: JSON.stringify(response),
+        }),
+      )
       return response
     } else {
       throw new Error(`Login error: Invalid login type`)
