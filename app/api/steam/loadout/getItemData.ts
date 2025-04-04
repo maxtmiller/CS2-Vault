@@ -159,6 +159,8 @@ export async function getSuggestionItemInfo(
 
     const item = Object.values(full_skin_data).find(item => item.name === items.name);
 
+    console.log(item)
+
     if (!item) {
         return null;
     }
