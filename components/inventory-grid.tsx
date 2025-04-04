@@ -305,8 +305,8 @@ export function InventoryGrid({
 
       {filteredItems.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-gray-400">
-          <p className="text-lg">No items match your filters</p>
-          <p className="text-sm mt-2">Try adjusting your filter criteria</p>
+          <p className="text-lg">No items match your filters / Error Retrieving Inventory Data</p>
+          <p className="text-sm mt-2">Try adjusting your filter criteria / Retry Login</p>
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
