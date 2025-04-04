@@ -115,27 +115,6 @@ export async function fetchInventory(steamId: string): Promise<{ item_data: Inve
       return { item_data: getMockInventoryItems(), storage_units: 0}
     }
   }
-
-  // try {
-  //   const file_data = await fetchInventoryFromJSON(steamId);
-  //   if (!(Array.isArray(file_data) && file_data.length === 0)) {
-  //     return file_data;
-  //   }
-
-  //   const response = await fetch(`/api/steam/inventory?steamid=${steamId}`)
-
-  //   if (!response.ok) {
-  //     throw new Error(`API error: ${response.status}`)
-  //   }
-
-  //   const data = await response.json()
-  //   const result = data.processedData
-
-  //   return result
-  // } catch {
-  //   console.error("Error fetching inventory:")
-  //   return getMockInventoryItems()
-  // }
 }
 
 function getMockInventoryItems2(): InventoryItem[] {

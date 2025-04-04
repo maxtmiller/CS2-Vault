@@ -19,11 +19,8 @@ export function Inventory({ steamId }: { steamId: string | null }) {
   const [items, setItems] = useState<InventoryItem[]>([])
   const [storageUnits, setStorageUnits] = useState<number>()
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [retryCount, setRetryCount] = useState(0)
-  const [storageUnitNames, setStorageUnitNames] = useState<string[]>([])
   const [filteredValue, setFilteredValue] = useState(0)
-  const [visibleItems, setVisibleItems] = useState(24) // Show 4 rows initially (6 items per row)
+  const [visibleItems, setVisibleItems] = useState(24)
   const [isScrolled, setIsScrolled] = useState(false)
   const [filteredItems, setFilteredItems] = useState<InventoryItem[]>([])
   const [selectedItems, setSelectedItems] = useState<InventoryItem[]>([])
@@ -268,7 +265,7 @@ export function Inventory({ steamId }: { steamId: string | null }) {
             ref={filterRef}
             className="sticky top-24 self-start max-h-[calc(100vh-120px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900"
           >
-            <InventoryFilters onFilterChange={setFilters}  storageUnitNames={storageUnitNames} />
+            <InventoryFilters onFilterChange={setFilters}  storageUnitNames={[]} />
           </div>
 
           <div ref={itemsRef}>
@@ -331,7 +328,6 @@ export function Inventory({ steamId }: { steamId: string | null }) {
           </Link>
         </div>
       </footer>
-
     </div>
   )
 }
