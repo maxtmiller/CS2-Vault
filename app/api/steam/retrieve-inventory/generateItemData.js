@@ -186,7 +186,7 @@ async function getItemInfoByDefIndex(old_data) {
 
     if (old_data.def_index ===  1201 || (old_data.def_index === 36 && old_data.paint_index === 125)) return null;
 
-    if (old_data.hasOwnProperty('paint_index') && (old_data.paint_index === 0 || old_data.paint_index === null)) {
+    if (old_data.def_index === 521) {
 
         const data = {
             "name": JSON.stringify(old_data),
