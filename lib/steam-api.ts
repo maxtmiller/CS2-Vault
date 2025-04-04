@@ -1,5 +1,6 @@
 // Updated Steam API client with the correct item schema based on real data
-import { fetchInventoryFromJSON } from '@/lib/utils';
+import { fetchInventoryFromJSON, fetchAllInventoryData, fetchVisibleInventoryData} from '@/lib/utils';
+import { Type } from 'protobufjs';
 
 
 export interface InventoryItem {
@@ -50,6 +51,39 @@ export interface InventoryItem {
 export async function fetchInventory(steamId: string): Promise<InventoryItem[]> {
   console.log(`Fetching inventory for Steam ID: ${steamId}`)
 
+  try {
+    const loginInfo = localStorage.getItem("login_type")
+    if (loginInfo === null) {
+      throw new Error(`Login error: No login type found`)
+    }
+
+    const parsedLoginInfo = JSON.parse(loginInfo)
+    const type = parsedLoginInfo.type
+    if (type === "jwt" || type === "qr") {
+      
+      const authData = parsedLoginInfo.authData
+      const loginType = parsedLoginInfo.loginType
+
+      const response = await fetchAllInventoryData(authData, loginType)
+      if (!response) {
+        throw new Error(`API error: No inventory data found`)
+      }
+      return response
+    }  else if (type === "steam") {
+
+      const response = await fetchVisibleInventoryData(steamId)
+      if (!response) {
+        throw new Error(`API error: No inventory data found`)
+      }
+      return response
+    } else {
+      throw new Error(`Login error: Invalid login type`)
+    }
+  } catch (error) {
+    console.error("Error fetching inventory:")
+    return getMockInventoryItems()
+  }
+
   // try {
   //   const file_data = await fetchInventoryFromJSON(steamId);
   //   if (!(Array.isArray(file_data) && file_data.length === 0)) {
@@ -71,24 +105,24 @@ export async function fetchInventory(steamId: string): Promise<InventoryItem[]> 
   //   return getMockInventoryItems()
   // }
 
-  try {
-    // Use our proxy endpoint instead of calling Steam directly
-    const response = await fetch(`/api/steam/inventory?steamid=${steamId}`, {
-      // Add cache: 'no-store' to prevent caching
-    })
+  // try {
+  //   // Use our proxy endpoint instead of calling Steam directly
+  //   const response = await fetch(`/api/steam/inventory?steamid=${steamId}`, {
+  //     // Add cache: 'no-store' to prevent caching
+  //   })
 
-    const data = await response.json()
-    const result = data.processedData.item_data
+  //   const data = await response.json()
+  //   const result = data.processedData.item_data
 
-    // Process the Steam inventory data
-    return result
-  } catch (error) {
-    console.error("Error fetching inventory:", error)
+  //   // Process the Steam inventory data
+  //   return result
+  // } catch (error) {
+  //   console.error("Error fetching inventory:", error)
 
-    // For development/demo purposes, fall back to mock data if the API call fails
-    console.log("Falling back to mock data")
-    return getMockInventoryItems()
-  }
+  //   // For development/demo purposes, fall back to mock data if the API call fails
+  //   console.log("Falling back to mock data")
+  //   return getMockInventoryItems()
+  // }
 }
 
 function getMockInventoryItems2(): InventoryItem[] {

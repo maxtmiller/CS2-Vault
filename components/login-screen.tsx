@@ -42,6 +42,15 @@ export function LoginScreen() {
   }
 
   const handleSteamOAuth = async () => {
+    localStorage.setItem(
+      "login_type",
+      JSON.stringify({
+        timestamp: Date.now(),
+        type: "steam",
+        loginType: 3,
+        authData: "",
+      }),
+    )
     window.location.href = "/api/auth/steam"
   }
 
@@ -58,50 +67,62 @@ export function LoginScreen() {
         // accessTokenSetAt: data.session.accessTokenSetAt,
       }
 
-      const response = await fetch("/api/steam/retrieve-inventory", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ authData: data, loginType: 1 }),
-      })
+      localStorage.setItem(
+        "login_type",
+        JSON.stringify({
+          timestamp: Date.now(),
+          type: "qr",
+          loginType: 1,
+          authData: JSON.stringify(authData) || "",
+        }),
+      )
 
-      if (response.ok) {
-        const inventoryData = await response.json()
+      window.location.href = `/api/auth/create-session?steamid=${data.session.steamID}`
 
-        if (inventoryData.success && inventoryData.item_data) {
-          localStorage.setItem(
-            "cs2_inventory_data",
-            JSON.stringify({
-              timestamp: Date.now(),
-              data: inventoryData.item_data,
-              steamID: inventoryData.steamID,
-              storage_units: inventoryData.storage_units || [],
-            }),
-          )
+      // const response = await fetch("/api/steam/retrieve-inventory", {
+      //   method: "POST",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //   },
+      //   body: JSON.stringify({ authData: data, loginType: 1 }),
+      // })
 
-          toast({
-            title: "Login successful",
-            description: `Retrieved ${inventoryData.item_data?.length || 0} items from inventory`,
-          })
+      // if (response.ok) {
+      //   const inventoryData = await response.json()
 
-          // Use window.location.replace instead of window.location.href for a full page reload
-          window.location.replace("/")
-        } else {
-          toast({
-            title: "Login successful",
-            description: "Redirecting to inventory...",
-          })
-          window.location.replace("/")
-        }
-      } else {
-        toast({
-          title: "Inventory retrieval failed",
-          description: "Failed to retrieve inventory data",
-          variant: "destructive",
-        })
-        throw new Error("Failed to retrieve inventory data")
-      }
+      //   if (inventoryData.success && inventoryData.item_data) {
+      //     localStorage.setItem(
+      //       "cs2_inventory_data",
+      //       JSON.stringify({
+      //         timestamp: Date.now(),
+      //         data: inventoryData.item_data,
+      //         steamID: inventoryData.steamID,
+      //         storage_units: inventoryData.storage_units || [],
+      //       }),
+      //     )
+
+      //     toast({
+      //       title: "Login successful",
+      //       description: `Retrieved ${inventoryData.item_data?.length || 0} items from inventory`,
+      //     })
+
+      //     // Use window.location.replace instead of window.location.href for a full page reload
+      //     window.location.replace("/")
+      //   } else {
+      //     toast({
+      //       title: "Login successful",
+      //       description: "Redirecting to inventory...",
+      //     })
+      //     window.location.replace("/")
+      //   }
+      // } else {
+      //   toast({
+      //     title: "Inventory retrieval failed",
+      //     description: "Failed to retrieve inventory data",
+      //     variant: "destructive",
+      //   })
+      //   throw new Error("Failed to retrieve inventory data")
+      // }
     } catch (error) {
       console.error("QR login error:", error)
       toast({
@@ -210,53 +231,86 @@ export function LoginScreen() {
 
     setIsLoading(true)
     try {
-      
-      const response = await fetch("/api/steam/retrieve-inventory", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ authData: jwtToken, loginType: 2 }),
-      })
 
-      if (response.ok) {
-        // Parse the response to get the inventory data
-        const inventoryData = await response.json()
-
-        // Store the inventory data in localStorage
-        if (inventoryData.success && inventoryData.item_data) {
-          localStorage.setItem(
-            "cs2_inventory_data",
-            JSON.stringify({
-              timestamp: Date.now(),
-              data: inventoryData.item_data,
-              steamID: inventoryData.steamID,
-              storage_units: inventoryData.storage_units || [],
-            }),
-          )
-
-          toast({
-            title: "Login successful",
-            description: `Retrieved ${inventoryData.item_data?.length || 0} items from inventory`,
-          })
-
-          // Use window.location.replace instead of window.location.href for a full page reload
-          window.location.replace("/")
-        } else {
-          toast({
-            title: "Login successful",
-            description: "Redirecting to inventory...",
-          })
-          window.location.replace("/")
-        }
-      } else {
+      let parsedJWT
+      try {
+        parsedJWT = JSON.parse(jwtToken)
+      } catch (error) {
         toast({
-          title: "Inventory retrieval failed",
-          description: "Invalid JWT token",
+          title: "Invalid Token",
           variant: "destructive",
         })
         throw new Error("Invalid JWT token")
       }
+
+      if (!parsedJWT.logged_in || !parsedJWT.steamid || !parsedJWT.accountid || !parsedJWT.account_name || !parsedJWT.token) {
+        toast({
+          title: "Invalid Token",
+          variant: "destructive",
+        })
+        throw new Error("Invalid JWT token")
+      }
+
+      localStorage.setItem(
+        "login_type",
+        JSON.stringify({
+          timestamp: Date.now(),
+          type: "jwt",
+          loginType: 2,
+          authData: jwtToken || "",
+        }),
+      )
+
+      window.location.href = `/api/auth/create-session?steamid=${parsedJWT.steamid}`
+
+      // throw new Error("Stopped JWT token")
+      
+      // const response = await fetch("/api/steam/retrieve-inventory", {
+      //   method: "POST",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //   },
+      //   body: JSON.stringify({ authData: jwtToken, loginType: 2 }),
+      // })
+
+      // if (response.ok) {
+      //   // Parse the response to get the inventory data
+      //   const inventoryData = await response.json()
+
+      //   // Store the inventory data in localStorage
+      //   if (inventoryData.success && inventoryData.item_data) {
+      //     localStorage.setItem(
+      //       "cs2_inventory_data",
+      //       JSON.stringify({
+      //         timestamp: Date.now(),
+      //         data: inventoryData.item_data,
+      //         steamID: inventoryData.steamID,
+      //         storage_units: inventoryData.storage_units || [],
+      //       }),
+      //     )
+
+      //     toast({
+      //       title: "Login successful",
+      //       description: `Retrieved ${inventoryData.item_data?.length || 0} items from inventory`,
+      //     })
+
+      //     // Use window.location.replace instead of window.location.href for a full page reload
+      //     window.location.replace("/")
+      //   } else {
+      //     toast({
+      //       title: "Login successful",
+      //       description: "Redirecting to inventory...",
+      //     })
+      //     window.location.replace("/")
+      //   }
+      // } else {
+      //   toast({
+      //     title: "Inventory retrieval failed",
+      //     description: "Invalid JWT token",
+      //     variant: "destructive",
+      //   })
+      //   throw new Error("Invalid JWT token")
+      // }
     } catch (error) {
       console.error("JWT login error:", error)
       toast({
@@ -287,12 +341,12 @@ export function LoginScreen() {
               <TabsTrigger value="steam" className="data-[state=active]:bg-gray-900">
                 Steam
               </TabsTrigger>
-              {/* <TabsTrigger value="qr" className="data-[state=active]:bg-gray-900">
+              <TabsTrigger value="qr" className="data-[state=active]:bg-gray-900">
                 QR Code
               </TabsTrigger>
               <TabsTrigger value="jwt" className=" disabled data-[state=active]:bg-gray-900">
                 JWT Token
-              </TabsTrigger> */}
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="steam" className="mt-4">

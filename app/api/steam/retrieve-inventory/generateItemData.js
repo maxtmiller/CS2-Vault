@@ -468,10 +468,9 @@ export async function initializeCSGOInventory(authData, loginType) {
                     mergedData = await mergeData(mergedData);
                     mergedData = await appendInfo(mergedData);
 
-                    const rootFolder = process.cwd();
-                    const filePath = path.join(rootFolder, `temp/full_inventory_data-${steamID}.json`);
-
-                    fs.writeFileSync(filePath, mergedData, 'utf-8');
+                    // const rootFolder = process.cwd();
+                    // const filePath = path.join(rootFolder, `temp/full_inventory_data-${steamID}.json`);
+                    // fs.writeFileSync(filePath, mergedData, 'utf-8');
 
                     resolve({ item_data: mergedData, steamID: steamID, storage_units: storage_units });
                 } catch (err) {

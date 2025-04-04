@@ -606,14 +606,5 @@ export async function processInventoryData(data: any, steamId: string): Promise<
     // Parse the merged JSON string back into an array
     const mergedData = JSON.parse(mergedJson);
 
-    try {
-        const rootFolder = process.cwd();
-        const filePath = path.join(rootFolder, `temp/full_inventory_data-${steamId}.json`);
-        // fs.writeFileSync(filePath, JSON.stringify(mergedData, null, 2), 'utf-8');
-        console.log('File written successfully');
-    } catch (error) {
-        console.error('Error writing file:', error);
-    }
-
     return { item_data: mergedData, steamID: steamId, storage_units: [] };
 }

@@ -60,7 +60,7 @@ export async function flowLoginRegularQR() {
     try {
       console.log("Attempting to start QR login...")
       const result = await session.startWithQR()
-      console.log("QR Login Result:", result)
+      // console.log("QR Login Result:", result)
 
       if (!result || !result.qrChallengeUrl) {
         throw new Error("QR Challenge URL is missing")

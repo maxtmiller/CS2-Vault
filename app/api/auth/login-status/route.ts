@@ -7,7 +7,7 @@ let lastAuthEvent: any = null
 
 // Listen for authentication events
 authEmitter.on("authenticated", (data) => {
-  console.log("Auth event received in login-status:", data)
+  console.log("Auth event received in login-status")
   lastAuthEvent = {
     timestamp: Date.now(),
     data,
@@ -16,6 +16,11 @@ authEmitter.on("authenticated", (data) => {
 
 function delay(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function accountIdToSteamID64(accountId: number | string): string {
+  const STEAMID64_BASE = BigInt("76561197960265728");
+  return (STEAMID64_BASE + BigInt(accountId)).toString();
 }
 
 export async function GET(request: NextRequest) {
@@ -28,7 +33,7 @@ export async function GET(request: NextRequest) {
       const authData = lastAuthEvent.data
       lastAuthEvent = null
 
-      console.log("line 27: ", authData)
+      authData.steamID = accountIdToSteamID64(authData.steamId.accountid)
 
       return NextResponse.json({
         loggedIn: true,
@@ -37,19 +42,18 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    console.log("line 34: ", session)
-
     // Check if we have an active session from the QR login
     if (session && session.accessToken) {
       // Verify the session is still valid
       try {
+
         // You could add additional validation here if needed
         return NextResponse.json({
           loggedIn: true,
           responseStatus: "loggedIn",
           session: {
             accountName: session.accountName,
-            steamID: session.steamID,
+            steamID: accountIdToSteamID64(session.steamID.accountid),
             refreshToken: session.refreshToken,
             accessToken: session.accessToken,
             // accessTokenSetAt: session.accessTokenSetAt,

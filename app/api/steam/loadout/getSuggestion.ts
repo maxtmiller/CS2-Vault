@@ -19,7 +19,7 @@ export async function getSuggestion(items: any[]): Promise<any> {
 
         let prompt = "I have the following items: "
         for (const item of items) {
-            const cur = ` a ${item.name} in ${item.wear} that costs ${item.price},`
+            const cur = ` a ${item.name} in ${item.wear} that costs $${item.price},`
             prompt += cur;
         }
         prompt += "suggest at least 4 items that fit with my loadout with similar colours and a price, prioritize more useful weapons like gloves, knives, ak, m4, usp, glock in this order of importance and then other items."
@@ -52,7 +52,7 @@ export async function getSuggestion(items: any[]): Promise<any> {
 
         let responseText = "";
         if (response.message.content) {
-            // console.log(response.message.content[0].text);
+            console.log(response.message.content[0].text);
             responseText = response.message.content[0].text;
         }
 

@@ -7,11 +7,10 @@ export async function POST(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
     const steamId = searchParams.get("steamid")
-    
+
     // Clear the session cookie
     const cookieStore = await cookies()
     cookieStore.delete("steam_session")
-    const fileDeleted = await deleteInventoryData(steamId)
 
     // Reset the global session variable if it exists
     if (session) {
