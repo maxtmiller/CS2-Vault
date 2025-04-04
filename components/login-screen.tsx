@@ -79,50 +79,6 @@ export function LoginScreen() {
 
       window.location.href = `/api/auth/create-session?steamid=${data.session.steamID}`
 
-      // const response = await fetch("/api/steam/retrieve-inventory", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: JSON.stringify({ authData: data, loginType: 1 }),
-      // })
-
-      // if (response.ok) {
-      //   const inventoryData = await response.json()
-
-      //   if (inventoryData.success && inventoryData.item_data) {
-      //     localStorage.setItem(
-      //       "cs2_inventory_data",
-      //       JSON.stringify({
-      //         timestamp: Date.now(),
-      //         data: inventoryData.item_data,
-      //         steamID: inventoryData.steamID,
-      //         storage_units: inventoryData.storage_units || [],
-      //       }),
-      //     )
-
-      //     toast({
-      //       title: "Login successful",
-      //       description: `Retrieved ${inventoryData.item_data?.length || 0} items from inventory`,
-      //     })
-
-      //     // Use window.location.replace instead of window.location.href for a full page reload
-      //     window.location.replace("/")
-      //   } else {
-      //     toast({
-      //       title: "Login successful",
-      //       description: "Redirecting to inventory...",
-      //     })
-      //     window.location.replace("/")
-      //   }
-      // } else {
-      //   toast({
-      //     title: "Inventory retrieval failed",
-      //     description: "Failed to retrieve inventory data",
-      //     variant: "destructive",
-      //   })
-      //   throw new Error("Failed to retrieve inventory data")
-      // }
     } catch (error) {
       console.error("QR login error:", error)
       toast({
@@ -263,54 +219,6 @@ export function LoginScreen() {
 
       window.location.href = `/api/auth/create-session?steamid=${parsedJWT.steamid}`
 
-      // throw new Error("Stopped JWT token")
-      
-      // const response = await fetch("/api/steam/retrieve-inventory", {
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: JSON.stringify({ authData: jwtToken, loginType: 2 }),
-      // })
-
-      // if (response.ok) {
-      //   // Parse the response to get the inventory data
-      //   const inventoryData = await response.json()
-
-      //   // Store the inventory data in localStorage
-      //   if (inventoryData.success && inventoryData.item_data) {
-      //     localStorage.setItem(
-      //       "cs2_inventory_data",
-      //       JSON.stringify({
-      //         timestamp: Date.now(),
-      //         data: inventoryData.item_data,
-      //         steamID: inventoryData.steamID,
-      //         storage_units: inventoryData.storage_units || [],
-      //       }),
-      //     )
-
-      //     toast({
-      //       title: "Login successful",
-      //       description: `Retrieved ${inventoryData.item_data?.length || 0} items from inventory`,
-      //     })
-
-      //     // Use window.location.replace instead of window.location.href for a full page reload
-      //     window.location.replace("/")
-      //   } else {
-      //     toast({
-      //       title: "Login successful",
-      //       description: "Redirecting to inventory...",
-      //     })
-      //     window.location.replace("/")
-      //   }
-      // } else {
-      //   toast({
-      //     title: "Inventory retrieval failed",
-      //     description: "Invalid JWT token",
-      //     variant: "destructive",
-      //   })
-      //   throw new Error("Invalid JWT token")
-      // }
     } catch (error) {
       console.error("JWT login error:", error)
       toast({
@@ -326,8 +234,11 @@ export function LoginScreen() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 p-4 text-white">
       <div className="mb-8 text-center">
+        <div className="flex justify-center items-center pb-5">
+          <img src="/logo.png" width="150" height="150" alt="Logo" />
+        </div>
         <h1 className="mb-2 text-4xl font-bold">CS2 Vault Viewer</h1>
-        <p className="text-gray-300">View all your CS2 items including those in storage units</p>
+        <p className="text-gray-300">Your CS2 Inventory, Simplified and Enhanced.</p>
       </div>
 
       <Card className="w-full max-w-md bg-gray-800 border-gray-700">

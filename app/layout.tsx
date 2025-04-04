@@ -4,7 +4,7 @@ import './globals.css'
 
 export const metadata: Metadata = {
   title: 'CS2Vault',
-  description: 'Platform to evalute your CS2 Inventory',
+  description: 'Effortlessly view all your CS2 items, including those stored away, and discover the best suggestions for your collection.',
   icons: {
     icon: [
       { url: "/logo.png" },
