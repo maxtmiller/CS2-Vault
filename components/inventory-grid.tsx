@@ -310,7 +310,7 @@ export function InventoryGrid({
           {error !== null && (
             <div className="flex flex-col items-center justify-center py-12 text-gray-400">
               <p className="text-lg">Error Retrieving Inventory Data</p>
-              <p className="text-sm mt-2">Try Logining in again / Check if you have a CS2 Game Session</p>
+              <p className="text-sm mt-2">Try Logging in again / Close any active CS2 Game Sessions</p>
               </div>
             )}
           {error === null && (
