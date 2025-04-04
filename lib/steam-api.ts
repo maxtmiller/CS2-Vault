@@ -48,7 +48,7 @@ export interface InventoryItem {
   reason?: string | null
 }
 
-export async function fetchInventory(steamId: string): Promise<{ item_data: InventoryItem[], storage_units: number }> {
+export async function fetchInventory(steamId: string): Promise<{ success: Boolean, item_data: InventoryItem[], storage_units: number, error: string | null }> {
   console.log(`Fetching inventory for Steam ID: ${steamId}`)
 
   // Check if we have cached inventory data
@@ -56,7 +56,7 @@ export async function fetchInventory(steamId: string): Promise<{ item_data: Inve
   if (cachedData) {
     const parsedInventoryData = JSON.parse(cachedData)
     const data = JSON.parse(parsedInventoryData.data)
-    return { item_data: data, storage_units: parsedInventoryData.storage_units }
+    return { success: parsedInventoryData.success, item_data: data, storage_units: parsedInventoryData.storage_units, error: parsedInventoryData.error }
   }
 
   try {
@@ -73,7 +73,6 @@ export async function fetchInventory(steamId: string): Promise<{ item_data: Inve
       const loginType = parsedLoginInfo.loginType
 
       const response = await fetchAllInventoryData(authData, loginType)
-      console.log("Fetched inventory data:", response)
       if (!response) {
         throw new Error(`API error: No inventory data found`)
       }
@@ -81,8 +80,10 @@ export async function fetchInventory(steamId: string): Promise<{ item_data: Inve
         "inventory_data",
         JSON.stringify({
           timestamp: Date.now(),
+          success: response.success,
           data: JSON.stringify(response.item_data),
           storage_units: response.storage_units,
+          error: response.error,
         }),
       )
       return response
@@ -96,8 +97,10 @@ export async function fetchInventory(steamId: string): Promise<{ item_data: Inve
         "inventory_data",
         JSON.stringify({
           timestamp: Date.now(),
+          success: response.success,
           data: JSON.stringify(response.item_data),
           storage_units: response.storage_units,
+          error: response.error,
         }),
       )
       return response
@@ -113,7 +116,7 @@ export async function fetchInventory(steamId: string): Promise<{ item_data: Inve
       }
       return response
     } catch (error) {
-      return { item_data: getMockInventoryItems(), storage_units: 0}
+      return { success: true, item_data: getMockInventoryItems(), storage_units: 0, error: null}
     }
   }
 }

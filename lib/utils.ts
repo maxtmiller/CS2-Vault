@@ -39,10 +39,10 @@ export async function fetchAllInventoryData(authData: string, loginType: number)
     const storage_units = data.result.storage_units.length
     const item_data = JSON.parse(data.result.item_data)
 
-    return { item_data, storage_units }
+    return { success: true, item_data, storage_units, error: null }
   } catch (error) {
     console.error("Error fetching inventory:", error);
-    return { item_data: [], storage_units: 0 };
+    return { success: false, item_data: [], storage_units: 0, error};
   }
 }
 
@@ -64,10 +64,10 @@ export async function fetchVisibleInventoryData(steamId: string): Promise<any | 
     const data = await response.json()
     const result = data.processedData.item_data
 
-    return { item_data: result, storage_units: 0 }
+    return { success: true, item_data: result, storage_units: 0, error: null }
   } catch (error) {
     console.error("Error fetching inventory:", error)
-    return { item_data: [], storage_units: 0 };
+    return { success: false, item_data: [], storage_units: 0, error };
   }
 }
 
