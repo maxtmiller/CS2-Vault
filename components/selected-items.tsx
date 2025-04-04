@@ -22,7 +22,47 @@ interface SelectedItemsProps {
     const [responseItems, setResponseItems] = useState<InventoryItem[]>([])
     const [isLoading, setIsLoading] = useState(false)
     const [isLoadingMore, setIsLoadingMore] = useState(false)
+    const [selectedWeaponTypes, setSelectedWeaponTypes] = useState<string[]>(["any"])
     const { toast } = useToast()
+
+    const weaponTypes = [
+      { id: "pistol", name: "Pistols" },
+      { id: "smg", name: "SMGs" },
+      { id: "rifle", name: "Rifles" },
+      { id: "sniper", name: "Snipers" },
+      { id: "shotgun", name: "Shotguns" },
+      { id: "machinegun", name: "Machine Guns" },
+      { id: "knife", name: "Knives" },
+      { id: "gloves", name: "Gloves" },
+    ]
+  
+    // Toggle weapon type selection
+    const toggleWeaponType = (typeId: string) => {
+      if (typeId === "any") {
+        // If "any" is clicked, select only "any" and deselect others
+        setSelectedWeaponTypes(["any"])
+      } else {
+        setSelectedWeaponTypes((prev) => {
+          // If another type is selected, remove "any" from the selection
+          let newSelection = prev.filter((id) => id !== "any")
+  
+          // Toggle the selected type
+          if (newSelection.includes(typeId)) {
+            const newSelectionFiltered = newSelection.filter((id) => id !== typeId)
+            newSelection = newSelectionFiltered
+          } else {
+            newSelection.push(typeId)
+          }
+  
+          // If no types are selected, select "any" again
+          if (newSelection.length === 0) {
+            return ["any"]
+          }
+  
+          return newSelection
+        })
+      }
+    }
   
     // Handle submitting items to the API
     const handleSubmit = async () => {
@@ -37,6 +77,11 @@ interface SelectedItemsProps {
         };
         item_data.push(item_schema);
       }
+
+      const requestData = {
+        items: item_data,
+        weapon_preferences: selectedWeaponTypes.includes("any") ? ["any"] : selectedWeaponTypes,
+      }
   
       setIsLoading(true)
       try {
@@ -46,7 +91,7 @@ interface SelectedItemsProps {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(item_data),
+          body: JSON.stringify(requestData),
         })
   
         if (!response.ok) {
@@ -90,13 +135,18 @@ interface SelectedItemsProps {
         // Combine selected items and existing response items for the API call
         const combinedItems = [...items, ...responseItems]
 
+        const requestData = {
+          items: combinedItems,
+          weapon_preferences: selectedWeaponTypes.includes("any") ? undefined : selectedWeaponTypes,
+        }
+
         // Call the API with the combined items
         const response = await fetch("/api/steam/loadout", {
             method: "POST",
             headers: {
             "Content-Type": "application/json",
             },
-            body: JSON.stringify(combinedItems),
+            body: JSON.stringify(requestData),
         })
 
         if (!response.ok) {
@@ -110,10 +160,10 @@ interface SelectedItemsProps {
 
         // Add new items to existing response items (avoiding duplicates)
         const newItems = Array.isArray(data) ? data : []
-        const existingIds = new Set(responseItems.map((item) => item.id))
+        const existingIds = new Set(responseItems.map((item: any) => item.id))
         const uniqueNewItems = newItems.filter((item) => !existingIds.has(item.id))
 
-        setResponseItems((prev) => [...prev, ...uniqueNewItems])
+        setResponseItems((prev: any) => [...prev, ...uniqueNewItems])
 
         toast({
             title: "More items requested",
@@ -136,6 +186,7 @@ interface SelectedItemsProps {
         setResponseItems([])
         setJsonResult(null)
         onClearAll()
+        setSelectedWeaponTypes(["any"])
     }
   
     if (items.length === 0 && responseItems.length === 0) {
@@ -298,6 +349,43 @@ interface SelectedItemsProps {
           ))}
         </div>
       </ScrollArea>
+
+      {/* Weapon Type Selection Buttons */}
+      <div className="mt-4 border-t border-gray-700 pt-4">
+        <h3 className="text-sm font-medium mb-2">Select weapon types for suggestions:</h3>
+        <div className="flex flex-wrap gap-2 items-center">
+          <Button
+            size="sm"
+            variant={selectedWeaponTypes.includes("any") ? "default" : "outline"}
+            onClick={() => toggleWeaponType("any")}
+            className={`mr-3 ${
+              selectedWeaponTypes.includes("any")
+                ? "bg-blue-600 hover:bg-blue-700 text-white"
+                : "border-gray-600 hover:bg-gray-700 text-gray-300"
+            }`}
+            disabled={isLoading || isLoadingMore}
+          >
+            Any
+          </Button>
+
+          {weaponTypes.map((type) => (
+            <Button
+              key={type.id}
+              size="sm"
+              variant={selectedWeaponTypes.includes(type.id) ? "default" : "outline"}
+              onClick={() => toggleWeaponType(type.id)}
+              className={
+                selectedWeaponTypes.includes(type.id)
+                  ? "bg-blue-600 hover:bg-blue-700 text-white"
+                  : "border-gray-600 hover:bg-gray-700 text-gray-300"
+              }
+              disabled={isLoading || isLoadingMore}
+            >
+              {type.name}
+            </Button>
+          ))}
+        </div>
+      </div>
 
       {/* Response Items Section */}
       {responseItems.length > 0 && (

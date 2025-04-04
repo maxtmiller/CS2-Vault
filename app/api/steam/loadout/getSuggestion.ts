@@ -65,7 +65,7 @@ export async function getSuggestionCohere(items: any[]): Promise<any> {
 }
 
 
-export async function getSuggestionGemini(items: any[]): Promise<any> {
+export async function getSuggestionGemini(data: { items: any[], weapon_preferences: any[]}): Promise<any> {
 
     const apiKey: string | undefined = process.env.GEMINI_API_KEY;
     if (!apiKey) {
@@ -79,17 +79,22 @@ export async function getSuggestionGemini(items: any[]): Promise<any> {
             ## User Message
             I have the following items: 
         `;
-        for (const item of items) {
+        for (const item of data.items) {
             const cur = ` a ${item.name} in ${item.wear} that costs $${item.price},`
             prompt += cur;
         }
-        prompt += "suggest at least 4 items that fit with my loadout with similar colours and a price, prioritize more useful weapons like gloves, knives, ak, m4, usp, glock in this order of importance and then other items."
+        prompt += "suggest at least 4 items that fit with my loadout with similar colours and a price."
+
+        prompt += "I want suggestions for the following item types only: "
+        for (const item of data.weapon_preferences) {
+            prompt += ' '+item;
+        }
 
         console.log(prompt)
 
         const systemMessage = `
             ## Task and Context
-            You are a specialist in Valve's game CS2 and you will suggest items for the user that have similar colours to the items provided.
+            You are a specialist in Valve's game CS2 and you will suggest items for the user that have very similar colours to the items provided.
             DO NOT provide an item that the user inputted. Do NOT provide the same item type (if they provided a glove, DO NOT provide a glove back)
             Provide as many items as needed to complete their loadout with the main guns. That is, provide AT LEAST 4 items.
             Give items in the same price range as the ones inputted, DO NOT provide an item that is much more expensive unless it is a knife or glove.
