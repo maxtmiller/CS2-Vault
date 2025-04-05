@@ -231,24 +231,24 @@ export function Inventory({ steamId }: { steamId: string | null }) {
                 <div
                 className={`hidden md:flex items-center space-x-6 ml-8 text-sm transition-all duration-300 ${isScrolled ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none"}`}
                 >
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-3">
                     <span className="text-gray-400">Items:</span>
-                    <span className="font-bold">{filteredItems.length}</span>
+                    <span className="font-bold">{items.length}</span>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-3">
                     <span className="text-gray-400">Storage Units:</span>
                     <span className="font-bold">
-                      {new Set(items.filter((item) => item.storageUnit).map((item) => item.storageUnit)).size}
+                      {storageUnits}
                     </span>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-3">
                     <span className="text-gray-400">Filtered Value:</span>
                     <span className="font-bold text-green-500">${filteredValue.toFixed(2)}</span>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-3">
                     <span className="text-gray-400">Total Value:</span>
                     <span className="font-bold text-green-500">
-                      ${items.reduce((sum, item) => sum + (item.steam_price || 0) * (item.quantity || 1), 0).toFixed(2)}
+                      {items.reduce((sum, item) => sum + (item.steam_price || 0) * (item.quantity || 1), 0).toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -262,7 +262,7 @@ export function Inventory({ steamId }: { steamId: string | null }) {
         </header>
 
 
-        <main ref={mainRef} className="container mx-auto p-4 flex-grow">
+        <main ref={mainRef} className="container mx-auto p-4 pb-12 flex-grow">
           {/* Only show stats when not scrolled - with smooth transition */}
           <div
             className={`mb-6 transition-all duration-300 ${isScrolled ? "opacity-0 max-h-0 overflow-hidden" : "opacity-100 max-h-40"}`}
@@ -328,7 +328,7 @@ export function Inventory({ steamId }: { steamId: string | null }) {
 
         {/* Footer to prevent white background when scrolling past content */}
         <footer className="bg-gray-900 py-6 border-t-2 border-gray-600 pt-2">
-          <div className="container mx-auto pt-3 flex items-center justify-between text-sm text-gray-500">
+          <div className="container mx-auto pt-6 pb-2 flex items-center justify-between text-sm text-gray-500">
             <Link
                 href="https://github.com/maxtmiller"
                 target="_blank"
@@ -336,9 +336,9 @@ export function Inventory({ steamId }: { steamId: string | null }) {
                 className="text-muted-foreground hover:text-primary transition-colors pl-6"
                 aria-label="GitHub"
               >
-                <Github className="h-5 w-5" />
+                <Github className="h-7 w-7" />
             </Link>
-            <p className="text-center w-full">
+            <p className="text-center text-lg w-full">
               @ 2025 CS2 Vault • Not affiliated with Valve or Steam
             </p>
             <Link
@@ -348,7 +348,7 @@ export function Inventory({ steamId }: { steamId: string | null }) {
               className="text-muted-foreground hover:text-primary transition-colors pr-6"
               aria-label="Steam"
             >
-              <SteamIcon className="h-5 w-5" />
+              <SteamIcon className="h-7 w-7" />
             </Link>
           </div>
         </footer>
