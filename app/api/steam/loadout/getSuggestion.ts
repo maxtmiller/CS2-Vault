@@ -65,11 +65,11 @@ export async function getSuggestionCohere(items: any[]): Promise<any> {
 }
 
 
-export async function getSuggestionGemini(data: { items: any[], weapon_preferences: any[]}): Promise<any> {
+export async function getItemSuggestionGemini(data: { items: any[], weapon_preferences: any[]}): Promise<any> {
 
     const apiKey: string | undefined = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-        throw new Error("COHERE_API_KEY is not defined in the environment variables.");
+        throw new Error("GEMINI_API_KEY is not defined in the environment variables.");
     }
     const ai = new GoogleGenAI({ apiKey: apiKey });
     
@@ -109,6 +109,58 @@ export async function getSuggestionGemini(data: { items: any[], weapon_preferenc
                 id: (a string starting from 0, unique for each one)
                 name: (the market hash name of the item, ie. USPS | Prinstream)
                 wear_name: (the wear_name of the item, ie. Factory New)
+                description: (why you think this is a good fit)
+            }
+        `;
+        
+        const response = await ai.models.generateContent({
+            model: "gemini-2.0-flash",
+            contents: systemMessage+prompt,
+        });
+
+        let responseText = "";
+        if (response.text) {
+            console.log(response.text);
+            responseText = response.text;
+        }
+
+        const parsedResponse = JSON.parse(responseText.replace(/```json\s*/, "").replace(/```$/, ""));
+
+        return parsedResponse;
+    } catch (error: any) {
+        console.error(`Error occurred: ${error.message}`);
+        throw error;
+    }
+}
+
+
+export async function getCraftSuggestionGemini(item: any): Promise<any> {
+
+    const apiKey: string | undefined = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+        throw new Error("GEMINI_API_KEY is not defined in the environment variables.");
+    }
+    const ai = new GoogleGenAI({ apiKey: apiKey });
+    
+    try {
+
+        let prompt = `
+            ## User Message
+            I have the following item: a ${item.name} in ${item.wear} that costs $${item.price} with image ${item.image}.
+            Suggest at least 4 different stickers that would fit well with this item in a 4x craft.
+        `;
+
+        console.log(prompt)
+
+        const systemMessage = `
+            ## Task and Context
+            You are a specialist in Valve's game CS2 and you will suggest sticker crafts for the user that have very similar colours to the item provided and fit well.          
+
+            ## Style Guide
+            Respond in following the exact json specification below for each sticker suggested, and put all the stickers into an array that you will return. Do not respond with any other text.
+            {
+                id: (a string starting from 0, unique for each one)
+                name: (the market hash name of the sticker, ie. Sticker | drop (Holo) | Antwerp 2022)
                 description: (why you think this is a good fit)
             }
         `;

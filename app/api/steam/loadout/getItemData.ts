@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import protobuf from 'protobufjs';
 import CRC32 from 'crc-32';
-import type { ResponseData } from './route'
+import type { ResponseDataItem } from './route'
 import { fetchData, getFullItemData, getFullPriceData, getFullSkinData } from "@/lib/data-loader"
 import type { PriceData, SkinData } from '@/lib/data-loader'
 
@@ -149,7 +149,7 @@ function getRarityNum(rarity_name: string): number | null {
 }
 
 export async function getSuggestionItemInfo(
-    items: ResponseData,
+    items: ResponseDataItem,
 ): Promise<ItemData | null> {
 
     await fetchData();

@@ -11,7 +11,7 @@ import { X, Send, SquareArrowOutUpRight, Plus, Loader2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
 
-interface SelectedItemsProps {
+  interface SelectedItemsProps {
     items: InventoryItem[]
     onRemoveItem: (id: string) => void
     onClearAll: () => void
@@ -21,7 +21,9 @@ interface SelectedItemsProps {
     const [jsonResult, setJsonResult] = useState<string | null>(null)
     const [responseItems, setResponseItems] = useState<InventoryItem[]>([])
     const [isLoading, setIsLoading] = useState(false)
+    const [isLoadingCraft, setIsLoadingCraft] = useState(false)
     const [isLoadingMore, setIsLoadingMore] = useState(false)
+    const [isLoadingMoreCrafts, setIsLoadingMoreCrafts] = useState(false)
     const [selectedWeaponTypes, setSelectedWeaponTypes] = useState<string[]>(["any"])
     const { toast } = useToast()
 
@@ -63,9 +65,137 @@ interface SelectedItemsProps {
         })
       }
     }
+
+    const handleSubmitCrafts = async () => {
+      if (items.length === 0) return
+
+      const item_data = [];
+      for (const item of items) {
+        item_data.push(item);
+      }
+
+      const requestData = {
+        item: item_data[0],
+      }
+
+      const payload = {
+        type: "crafts",
+        data: requestData,
+      }
+  
+      setIsLoadingCraft(true)
+      try {
+        // Call the API with the selected items
+        const response = await fetch("/api/steam/loadout", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        })
+  
+        if (!response.ok) {
+          throw new Error(`Error: ${response.status}`)
+        }
+  
+        const data = await response.json()
+  
+        // Display the JSON data
+        setJsonResult(JSON.stringify(data, null, 2))
+  
+        // Store the response items
+        setResponseItems(Array.isArray(data) ? data : [])
+  
+        toast({
+          title: "Items submitted successfully",
+          description: `${items.length} items have been processed`,
+        })
+      } catch (error) {
+        console.error("Error submitting items:", error)
+        toast({
+          title: "Submission failed",
+          description: error instanceof Error ? error.message : "Failed to submit items",
+          variant: "destructive",
+        })
+  
+        // For demo purposes, show the items that were submitted
+        setJsonResult(JSON.stringify(items, null, 2))
+        setResponseItems(items)
+      } finally {
+        setIsLoadingCraft(false)
+      }
+    }
+
+    // Handle requesting more items
+    const handleRequestMoreCrafts = async () => {
+      if (isLoadingMoreCrafts) return
+
+      setIsLoadingMoreCrafts(true)
+      try {
+      // Combine selected items and existing response items for the API call
+      const item_data = [];
+      for (const item of items) {
+        item_data.push(item);
+      }
+
+      const requestData = {
+        item: item_data[0],
+      }
+
+      const payload = {
+        type: "crafts",
+        data: requestData,
+      }
+
+      // Call the API with the combined items
+      const response = await fetch("/api/steam/loadout", {
+          method: "POST",
+          headers: {
+          "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+          throw new Error(`Error: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      // Update the JSON result
+      setJsonResult(JSON.stringify(data, null, 2))
+
+      // Add new items to existing response items (avoiding duplicates)
+      const newItems = Array.isArray(data) ? data : []
+      const existingIds = new Set(responseItems.map((item: any) => JSON.stringify(item.stickers)));
+      const uniqueNewItems = newItems.filter((item) => {
+        // Create a unique identifier for the current item's stickers field
+        const stickerId = JSON.stringify(item.stickers);
+      
+        // Only include items whose stickerId is not already in the existingIds set
+        return !existingIds.has(stickerId);
+      });
+
+      setResponseItems((prev: any) => [...prev, ...uniqueNewItems])
+
+      toast({
+          title: "More items requested",
+          description: `Added ${uniqueNewItems.length} new items`,
+      })
+      } catch (error) {
+      console.error("Error requesting more items:", error)
+      toast({
+          title: "Request failed",
+          description: error instanceof Error ? error.message : "Failed to request more items",
+          variant: "destructive",
+      })
+      } finally {
+      setIsLoadingMoreCrafts(false)
+      }
+  }
   
     // Handle submitting items to the API
-    const handleSubmit = async () => {
+    const handleSubmitItems = async () => {
       if (items.length === 0) return
 
       const item_data = [];
@@ -83,6 +213,11 @@ interface SelectedItemsProps {
         items: item_data,
         weapon_preferences: selectedWeaponTypes.includes("any") ? ["any"] : selectedWeaponTypes,
       }
+
+      const payload = {
+        type: "items",
+        data: requestData,
+      }
   
       setIsLoading(true)
       try {
@@ -92,7 +227,7 @@ interface SelectedItemsProps {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(requestData),
+          body: JSON.stringify(payload),
         })
   
         if (!response.ok) {
@@ -128,7 +263,7 @@ interface SelectedItemsProps {
     }
 
     // Handle requesting more items
-    const handleRequestMore = async () => {
+    const handleRequestMoreItems = async () => {
         if (isLoadingMore) return
 
         setIsLoadingMore(true)
@@ -141,13 +276,18 @@ interface SelectedItemsProps {
           weapon_preferences: selectedWeaponTypes.includes("any") ? undefined : selectedWeaponTypes,
         }
 
+        const payload = {
+          type: "items",
+          data: requestData,
+        }
+
         // Call the API with the combined items
         const response = await fetch("/api/steam/loadout", {
             method: "POST",
             headers: {
             "Content-Type": "application/json",
             },
-            body: JSON.stringify(requestData),
+            body: JSON.stringify(payload),
         })
 
         if (!response.ok) {
@@ -184,10 +324,10 @@ interface SelectedItemsProps {
 
     // Enhanced clear all function that also clears response items
     const handleClearAll = () => {
-        setResponseItems([])
-        setJsonResult(null)
-        onClearAll()
-        setSelectedWeaponTypes(["any"])
+      setResponseItems([])
+      setJsonResult(null)
+      onClearAll()
+      setSelectedWeaponTypes(["any"])
     }
   
     if (items.length === 0 && responseItems.length === 0) {
@@ -256,13 +396,32 @@ interface SelectedItemsProps {
           <p className="text-sm text-gray-400">Select weapons or agents to add them here</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={handleClearAll}  disabled={isLoading || isLoadingMore} className="border-gray-600 hover:bg-gray-700">
+          <Button variant="outline" size="sm" onClick={handleClearAll}  disabled={isLoading || isLoadingMore || isLoadingCraft} className="border-gray-600 hover:bg-gray-700">
             Clear All
           </Button>
-          <Button
-                onClick={handleSubmit}
+          {items.length === 1 && (items[0].type === 'Rifles' || items[0].type === 'SMGs' || items[0].type === 'Pistols' || items[0].type === 'Heavy') ? (
+            <Button
+            onClick={handleSubmitCrafts}
+            className="bg-blue-600 hover:bg-blue-700"
+            disabled={isLoading || isLoadingMore || isLoadingCraft || isLoadingMoreCrafts}
+            >
+              {isLoadingCraft ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Recommend Crafts
+                </>
+              )}
+            </Button>
+          ) : (
+            <Button
+                onClick={handleSubmitItems}
                 className="bg-blue-600 hover:bg-blue-700"
-                disabled={isLoading || isLoadingMore || items.length === 0}
+                disabled={isLoading || isLoadingMore || isLoadingCraft || isLoadingMoreCrafts || items.length === 0}
               >
                 {isLoading ? (
                   <>
@@ -272,10 +431,11 @@ interface SelectedItemsProps {
                 ) : (
                   <>
                     <Send className="h-4 w-4 mr-2" />
-                    Submit
+                    Recommend Items
                   </>
                 )}
             </Button>
+          )}
         </div>
       </div>
 
@@ -289,7 +449,7 @@ interface SelectedItemsProps {
               <button
                 className="absolute top-1 right-1 bg-gray-800 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                 onClick={() => onRemoveItem(item.id)}
-                disabled={isLoading || isLoadingMore}
+                disabled={isLoading || isLoadingMore || isLoadingCraft || isLoadingMoreCrafts}
               >
                 <X className="h-3 w-3 text-gray-400" />
               </button>
@@ -327,8 +487,20 @@ interface SelectedItemsProps {
                 </Button>
                 )}
             </div>
-              <div className="aspect-square p-2">
+              <div className="aspect-square pt-2 pr-2 pl-2">
                 <img src={item.icon_url} alt={item.name} className="h-full w-full object-contain" />
+                {item.stickers && item.stickers.length > 0 && (
+                <div className="flex items-center justify-evenly bottom-0 left-0 right-0 text-center text-xs gap-2">
+                  {item.stickers?.map((sticker, index) => (
+                    <img
+                      key={index}
+                      src={sticker.image}
+                      alt={sticker.name}
+                      style={{ width: '20px', height: '20px' }} // adjust size as needed
+                    />
+                  ))}
+                </div>
+                )}
               </div>
               <div className="p-2">
                 <div className="flex items-center space-x-1">
@@ -352,41 +524,43 @@ interface SelectedItemsProps {
       </ScrollArea>
 
       {/* Weapon Type Selection Buttons */}
-      <div className="mt-4 border-t border-gray-700 pt-4">
-        <h3 className="text-sm font-medium mb-2">Select weapon types for suggestions:</h3>
-        <div className="flex flex-wrap gap-2 items-center">
-          <Button
-            size="sm"
-            variant={selectedWeaponTypes.includes("any") ? "default" : "outline"}
-            onClick={() => toggleWeaponType("any")}
-            className={`mr-3 ${
-              selectedWeaponTypes.includes("any")
-                ? "bg-blue-600 hover:bg-blue-700 text-white"
-                : "border-gray-600 hover:bg-gray-700 text-gray-300"
-            }`}
-            disabled={isLoading || isLoadingMore}
-          >
-            Any
-          </Button>
-
-          {weaponTypes.map((type) => (
+      {items.length > 1 && (
+        <div className="mt-4 border-t border-gray-700 pt-4">
+          <h3 className="text-sm font-medium mb-2">Select weapon types for suggestions:</h3>
+          <div className="flex flex-wrap gap-2 items-center">
             <Button
-              key={type.id}
               size="sm"
-              variant={selectedWeaponTypes.includes(type.id) ? "default" : "outline"}
-              onClick={() => toggleWeaponType(type.id)}
-              className={
-                selectedWeaponTypes.includes(type.id)
+              variant={selectedWeaponTypes.includes("any") ? "default" : "outline"}
+              onClick={() => toggleWeaponType("any")}
+              className={`mr-3 ${
+                selectedWeaponTypes.includes("any")
                   ? "bg-blue-600 hover:bg-blue-700 text-white"
                   : "border-gray-600 hover:bg-gray-700 text-gray-300"
-              }
-              disabled={isLoading || isLoadingMore}
+              }`}
+              disabled={isLoading || isLoadingMore || isLoadingCraft || isLoadingMoreCrafts}
             >
-              {type.name}
+              Any
             </Button>
-          ))}
+
+            {weaponTypes.map((type) => (
+              <Button
+                key={type.id}
+                size="sm"
+                variant={selectedWeaponTypes.includes(type.id) ? "default" : "outline"}
+                onClick={() => toggleWeaponType(type.id)}
+                className={
+                  selectedWeaponTypes.includes(type.id)
+                    ? "bg-blue-600 hover:bg-blue-700 text-white"
+                    : "border-gray-600 hover:bg-gray-700 text-gray-300"
+                }
+                disabled={isLoading || isLoadingMore || isLoadingCraft || isLoadingMoreCrafts}
+              >
+                {type.name}
+              </Button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Response Items Section */}
       {responseItems.length > 0 && (
@@ -396,23 +570,43 @@ interface SelectedItemsProps {
               <h2 className="text-lg font-semibold">Recommended Items ({responseItems.length})</h2>
               <p className="text-sm text-gray-400">Items recommended to complete your loadout</p>
             </div>
-            <Button
-              onClick={handleRequestMore}
+            {items.length === 1 && (items[0].type === 'Rifles' || items[0].type === 'SMGs' || items[0].type === 'Pistols' || items[0].type === 'Heavy') ? (
+              <Button
+              onClick={handleRequestMoreCrafts}
               className="bg-green-600 hover:bg-green-700"
-              disabled={isLoading || isLoadingMore}
-            >
-              {isLoadingMore ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Loading...
-                </>
-              ) : (
-                <>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Request More
-                </>
-              )}
-            </Button>
+              disabled={isLoading || isLoadingMore || isLoadingCraft || isLoadingMoreCrafts}
+              >
+                {isLoadingMoreCrafts ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Recommend More Crafts
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Button
+              onClick={handleRequestMoreItems}
+              className="bg-green-600 hover:bg-green-700"
+              disabled={isLoading || isLoadingMore || isLoadingCraft || isLoadingMoreCrafts}
+              >
+                {isLoadingMore ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Recommend More Items
+                  </>
+                )}
+              </Button>
+            )}
           </div>
 
           <ScrollArea className="w-full whitespace-nowrap" orientation="horizontal">
@@ -466,13 +660,25 @@ interface SelectedItemsProps {
                                 {/* Item image */}
                                 <div className="aspect-square p-2 relative">
                                     <div className="relative w-full h-full">
-                                    <Image
-                                        src={item.icon_url || "/placeholder.svg?height=200&width=200"}
-                                        alt={item.name || "Item"}
-                                        fill
-                                        className="object-contain"
-                                    />
+                                      <Image
+                                          src={item.icon_url || "/placeholder.svg?height=200&width=200"}
+                                          alt={item.name || "Item"}
+                                          fill
+                                          className="object-contain"
+                                      />
                                     </div>
+                                    {item.stickers && item.stickers.length > 0 && (
+                                      <div className="flex items-center justify-evenly bottom-0 left-0 right-0 text-center text-xs gap-2">
+                                        {item.stickers?.map((sticker, index) => (
+                                          <img
+                                            key={index}
+                                            src={sticker.image}
+                                            alt={sticker.name}
+                                            style={{ width: '20px', height: '20px' }} // adjust size as needed
+                                          />
+                                        ))}
+                                      </div>
+                                      )}
                                 </div>
                                 <div className="p-2">
                                     <div className="flex items-center space-x-1">
@@ -519,7 +725,26 @@ interface SelectedItemsProps {
                                   </>
                                   )}
 
-                                  <p className="col-span-2 text-gray-300 text-sm mt-2 break-words whitespace-normal break-spaces-normal"> {item.reason} </p>
+                                  {!item.stickers && (
+                                    <p className="col-span-2 text-gray-300 text-s mt-2 break-words whitespace-normal break-spaces-normal"> {item.reason} </p>
+                                  )}
+                                </div>
+                                <div className="text-sm pt-2">
+                                  {item.stickers && item.stickers.length > 0 && (
+                                      <>
+                                        <p className="font-medium text-center text-lg text-white">
+                                          Craft:
+                                        </p>
+                                        <p className="text-gray-300 break-words whitespace-normal break-spaces-normal">
+                                          4x - {item.stickers[0].name.substring(item.stickers[0].name.indexOf('|') + 1).trim()}
+                                        </p>
+                                        <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm pt-2">
+                                          <p className="text-gray-300">Price per Sticker:</p>
+                                          <p className="text-green-400">${Number(item.stickers[0].steam_price).toFixed(2)}</p>
+                                        </div>
+                                        <p className="col-span-2 text-gray-300 text-sm mt-2 break-words whitespace-normal break-spaces-normal"> {item.reason} </p>
+                                      </>
+                                    )}
                                 </div>
                             </div>
 

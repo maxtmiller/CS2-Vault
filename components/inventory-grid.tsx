@@ -356,11 +356,38 @@ export function InventoryGrid({
                       {item.is_stattrak && <Badge className="absolute left-10 top-2 bg-orange-600">StatTrak™</Badge>}
                       {item.is_souvenir && <Badge className="absolute left-10 top-2 bg-yellow-600">Souvenir</Badge>}
                       {item.quantity > 0 && <Badge className="absolute right-2 top-2 bg-blue-600">x{item.quantity}</Badge>}
-                      {item.location === "Storage Unit" && (
+                      {/* {item.location !== "Inventory" && (
                         <div className="absolute bottom-0 left-0 right-0 bg-black/80 p-1 text-center text-xs">
                           Storage Unit
                         </div>
-                      )}
+                      )} */}
+                      {item.stickers && item.stickers.length > 0 && (
+                        <div className="absolute flex justify-evenly bottom-0 left-0 right-0 p-1 text-center text-xs gap-2">
+                          {item.stickers?.map((sticker, index) => (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <img
+                                  key={index}
+                                  src={sticker.image}
+                                  alt={sticker.name}
+                                  style={{ width: '24px', height: '24px' }} // adjust size as needed
+                                />
+                              </TooltipTrigger>
+                              <TooltipContent side="top" className="w-16 p-0">
+                                <div className="bg-gray-900 rounded-md overflow-hidden border border-gray-700">
+                                  <div className="p-3 space-y-2">
+                                    {/* <p className="font-medium text-xxs text-white">
+                                      {sticker.name.split('|')[1]}
+                                    </p> */}
+                                    <p className="text-white text-xxs">{sticker.name.split('|')[1]}</p>
+                                    <p className="text-green-400 text-xxs">${Number(sticker.steam_price).toFixed(2)}</p>
+                                  </div>
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          ))}
+                        </div>
+                        )}
                     </div>
                     <CardContent className="p-2 bg-gray-900">
                     <div className="flex items-center space-x-2">

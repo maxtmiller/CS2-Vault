@@ -194,6 +194,29 @@ async function mergeData(mergedData) {
 }
 
 
+async function getStickers(old_data) {
+    if (old_data.stickers?.length > 0) {
+        const sticker_info = [];
+        old_data.stickers.map(item => {
+            const sticker = Object.entries(full_item_data).find(([key]) => key.endsWith(`sticker-${item.sticker_id}`))?.[1];
+            if (sticker) {
+                const new_data =  {
+                    sticker_id: item.sticker_id,
+                    name: sticker.name,
+                    image: sticker.image,
+                    steam_price: full_price_data[sticker.name] ? full_price_data[sticker.name].steam.last_ever : null,
+                };
+                Object.assign(item, new_data);
+                sticker_info.push(item);
+            }
+        });
+        old_data.stickers = sticker_info
+        return old_data;
+    }
+    return old_data;
+}
+
+
 async function getItemInfoByDefIndex(old_data) {
 
     if (old_data.def_index ===  1201 || (old_data.def_index === 36 && old_data.paint_index === 125)) return null;
@@ -381,13 +404,14 @@ async function appendInfo(mergedData) {
         const items = JSON.parse(jsonData);
 
         for (let i = 0; i < items.length; i++) {
-            const item = items[i];
+            let item = items[i];
 
             if (item.def_index === 4001 && item.quantity === 1) {
                 items.splice(i, 1);
                 i--;
             }
 
+            item = await getStickers(item);
             const new_data = await getItemInfoByDefIndex(item);
 
             if (new_data) {
