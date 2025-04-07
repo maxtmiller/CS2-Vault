@@ -447,7 +447,7 @@ export async function initializeCSGOInventory(authData, loginType) {
     
             client.on('loggedOn', () => {
                 console.log('Logged into Steam.');
-                client.setPersona(SteamUser.EPersonaState.Online);
+                // client.setPersona(SteamUser.EPersonaState.Online);
                 client.gamesPlayed([730]);
                 steamID = client.steamID.getSteamID64();
             });

@@ -364,7 +364,9 @@ export function InventoryGrid({
                       {item.stickers && item.stickers.length > 0 && (
                         <div className="absolute flex justify-evenly bottom-0 left-0 right-0 p-1 text-center text-xs gap-2">
                           {item.stickers?.map((sticker, index) => (
-                            <Tooltip>
+                            <Tooltip
+                            key={index}
+                            >
                               <TooltipTrigger asChild>
                                 <img
                                   key={index}

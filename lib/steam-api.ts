@@ -50,16 +50,35 @@ export interface InventoryItem {
 export async function fetchInventory(steamId: string): Promise<{ success: Boolean, item_data: InventoryItem[], storage_units: number, error: string | null }> {
   console.log(`Fetching inventory for Steam ID: ${steamId}`)
 
+  const version = "1.0.4"
+  let skip = false
+
   // Check if we have cached inventory data
   const cachedData = localStorage.getItem("inventory_data")
   if (cachedData) {
     const parsedInventoryData = JSON.parse(cachedData)
     const data = JSON.parse(parsedInventoryData.data)
     const timestamp = parsedInventoryData.expiresAt
-    if (Date.now() > timestamp) {
-      return { success: false, item_data: [], storage_units: 0, error: "cached data expired"}
+    const cachedVersion = parsedInventoryData.version
+    if (Date.now() > timestamp || cachedVersion !== version) {
+      const loginData = localStorage.getItem("login_type")
+      if (loginData) {
+        const parsedLoginData = JSON.parse(loginData)
+        const loginTimestamp = parsedLoginData.expiresAt
+        const loginType = parsedLoginData.type
+        if (Date.now() < loginTimestamp && loginType === "qr") {
+          skip = true
+        } else {
+          localStorage.removeItem("login_type")
+        }
+      }
+      if (!skip) {
+        return { success: false, item_data: [], storage_units: 0, error: "cached data expired"}
+      }
     }
-    return { success: parsedInventoryData.success, item_data: data, storage_units: parsedInventoryData.storage_units, error: parsedInventoryData.error }
+    if (!skip) {
+      return { success: parsedInventoryData.success, item_data: data, storage_units: parsedInventoryData.storage_units, error: parsedInventoryData.error }
+    }
   }
 
   try {
@@ -83,7 +102,9 @@ export async function fetchInventory(steamId: string): Promise<{ success: Boolea
         "inventory_data",
         JSON.stringify({
           timestamp: Date.now(),
+          expiresAt: Date.now() + 24 * 60 * 60 * 1000,
           success: response.success,
+          version: version,
           data: JSON.stringify(response.item_data),
           storage_units: response.storage_units,
           error: response.error,
@@ -100,7 +121,9 @@ export async function fetchInventory(steamId: string): Promise<{ success: Boolea
         "inventory_data",
         JSON.stringify({
           timestamp: Date.now(),
+          expiresAt: Date.now() + 24 * 60 * 60 * 1000,
           success: response.success,
+          version: version,
           data: JSON.stringify(response.item_data),
           storage_units: response.storage_units,
           error: response.error,
