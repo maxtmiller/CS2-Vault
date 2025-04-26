@@ -261,7 +261,7 @@ export function LoginScreen() {
               {/* <TabsTrigger value="qr" className="data-[state=active]:bg-gray-900">
                 QR Code
               </TabsTrigger> */}
-              <TabsTrigger value="jwt" className=" disabled data-[state=active]:bg-gray-900">
+              <TabsTrigger value="jwt" className="data-[state=active]:bg-gray-900">
                 JWT Token
               </TabsTrigger>
             </TabsList>

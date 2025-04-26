@@ -428,138 +428,151 @@ async function appendInfo(mergedData) {
     }
 }
 
+
 export async function initializeCSGOInventory(authData, loginType) {
     return new Promise((resolve, reject) => {
+
         const items_data = [];
         const storage_units = [];
         const client = new SteamUser();
         const csgo = new GlobalOffensive(client);
         let steamID;
 
-        function handleLoggedOn() {
-            console.log('Logged into Steam.');
-            client.gamesPlayed([730]);
-            steamID = client.steamID.getSteamID64();
-        }
-
         if (loginType === 1) {
             console.log('QR Code Flow');
-            client.logOn({ refreshToken: authData.refreshToken });
-            client.once('loggedOn', handleLoggedOn);
+
+            client.logOn({
+                refreshToken: authData.refreshToken
+            });
+    
+            client.on('loggedOn', () => {
+                console.log('Logged into Steam.');
+                // client.setPersona(SteamUser.EPersonaState.Online);
+                client.gamesPlayed([730]);
+                steamID = client.steamID.getSteamID64();
+            });
+
         } else {
             console.log('JWT Flow');
+
             client.logOn({
                 accountName: authData.account_name,
                 webLogonToken: authData.token,
                 steamID: authData.steamid
             });
-            client.once('loggedOn', () => {
-                handleLoggedOn();
+    
+            client.on('loggedOn', () => {
+                console.log('Logged into Steam.');
                 client.setPersona(SteamUser.EPersonaState.Online);
+                client.gamesPlayed([730]);
+                steamID = client.steamID.getSteamID64();
+                console.log('Get SteamID.');
             });
-        }
+        }    
 
-        csgo.once('connectedToGC', async () => {
+        csgo.on('connectedToGC', async () => {
             console.log('Connected to CS2 Game Coordinator.');
-            try {
-                await fetchData();
 
-                full_item_data = getFullItemData();
-                full_price_data = getFullPriceData();
-                full_skin_data = getFullSkinData();
+            await fetchData();
 
-                if (!csgo.inventory) throw new Error('Inventory not available.');
+            full_item_data = getFullItemData()
+            full_price_data = getFullPriceData()
+            full_skin_data = getFullSkinData()
 
-                const cleanedInventory = csgo.inventory
-                    .filter(item => !item.casket_id)
-                    .map(item => mapInventoryItem(item, "Inventory"));
-
-                // Separate normal items and storage units
-                const normalItems = [];
-                const casketItemsPromises = [];
-
-                for (const item of cleanedInventory) {
-                    if (item.casket_contained_item_count) {
-                        // Create a promise to fetch the casket contents
-                        const casketPromise = getCasketItems(csgo, item)
-                            .then(casketContents => {
-                                items_data.push(casketContents);
-                                storage_units.push({ name: item.custom_name, count: item.casket_contained_item_count });
-                            })
-                            .catch(err => {
-                                console.error('Error fetching casket contents:', err.message);
-                            });
-                        casketItemsPromises.push(casketPromise);
-                    } else {
-                        normalItems.push(item);
+            if (csgo.inventory) {
+                console.log('Inside Inventory.');
+                try {
+                    const cleanedInventory = csgo.inventory
+                        .filter(item => !item.casket_id)
+                        .map(({ 
+                            def_index, stickers, paint_wear, attribute, position, level, custom_desc, flags, quality,
+                            original_id, origin, interior_item, style, in_use, equipped_state, kill_eater_score_type, kill_eater_value, ...rest 
+                        }) => {
+                            const location = "Inventory";
+                            if (def_index === 1209 && Array.isArray(stickers) && stickers.length > 0) {
+                                return { def_index, sticker_id: stickers[0].sticker_id, ...rest, quality, location };
+                            }
+                            if (paint_wear) {
+                                const wear_name = getWearName(paint_wear);
+                                if (kill_eater_score_type === 0) {
+                                    return { def_index, ...rest, quality, paint_wear, wear_name, sttattrak_count: kill_eater_value, stickers, is_stattrak: true, is_souvenir: false, location };
+                                }
+                                if (quality === 12) {
+                                    return { def_index, ...rest, quality, paint_wear, wear_name, sttattrak_count: kill_eater_value, stickers, is_stattrak: false, is_souvenir: true, location };
+                                }
+                                return { def_index, ...rest, quality, paint_wear, wear_name, stickers, is_stattrak: false, is_souvenir: false, location };
+                            }
+                            return { def_index, ...rest, quality, location };
+                        });
+                    for (const item of cleanedInventory) {
+                        if (item.casket_contained_item_count) {
+                            try {
+                                const items = await new Promise((resolve, reject) => {
+                                    csgo.getCasketContents(item.id, (err, items) => {
+                                        if (err) {
+                                            reject(new Error('Error fetching casket contents: ' + err));
+                                        } else {
+                                            const mappedCasketItems = items
+                                                .map(({ 
+                                                    def_index, stickers, paint_wear, attribute, position, level, custom_desc, flags, quality,
+                                                    original_id, origin, interior_item, style, in_use, equipped_state, kill_eater_score_type, kill_eater_value, ...rest 
+                                                }) => {
+                                                    const location = item.custom_name;
+                                                    if (def_index === 1209 && Array.isArray(stickers) && stickers.length > 0) {
+                                                        return { def_index, sticker_id: stickers[0].sticker_id, ...rest, quality, location };
+                                                    }
+                                                    if (paint_wear) {
+                                                        const wear_name = getWearName(paint_wear);
+                                                        if (kill_eater_score_type === 0) {
+                                                            return { def_index, ...rest, quality, paint_wear, wear_name, sttattrak_count: kill_eater_value, stickers, is_stattrak: true, is_souvenir: false, location };
+                                                        }
+                                                        if (quality === 12) {
+                                                            return { def_index, ...rest, quality, paint_wear, wear_name, sttattrak_count: kill_eater_value, stickers, is_stattrak: false, is_souvenir: true, location };
+                                                        }
+                                                        return { def_index, ...rest, quality, paint_wear, wear_name, stickers, is_stattrak: false, is_souvenir: false, location };
+                                                    }
+                                                    return { def_index, ...rest, quality, location };
+                                                });
+                                    
+                                            resolve(mappedCasketItems);
+                                        }
+                                    });
+                                });
+                                console.log(`Casket contents for ${item.custom_name} saved.`);
+                                items_data.push(items);
+                                storage_units.push({ name: item.custom_name, count: item.casket_contained_item_count});
+                            } catch (err) {
+                                console.error(err.message);
+                            }
+                        }
                     }
+                    console.log('Inventory data saved.');
+                    items_data.push(cleanedInventory);
+
+                    client.logOff();
+                    let mergedData = await mergeJsonFiles(items_data);
+                    mergedData = await mergeData(mergedData);
+                    mergedData = await appendInfo(mergedData);
+
+                    // const rootFolder = process.cwd();
+                    // const filePath = path.join(rootFolder, `temp/full_inventory_data-${steamID}.json`);
+                    // fs.writeFileSync(filePath, mergedData, 'utf-8');
+
+                    resolve({ success: true, item_data: mergedData, steamID: steamID, storage_units: storage_units });
+                } catch (err) {
+                    console.error('Error processing inventory:', err);
+                    reject(err);
                 }
-
-                // Wait for ALL casket promises at once
-                await Promise.all(casketItemsPromises);
-
-                console.log('Casket items loaded.');
-
-                // Push normal inventory items
-                items_data.push(normalItems);
-
-                console.log('Inventory data saved.');
-
-                client.logOff();
-                let mergedData = await mergeJsonFiles(items_data);
-                mergedData = await mergeData(mergedData);
-                mergedData = await appendInfo(mergedData);
-
-                resolve({ success: true, item_data: mergedData, steamID, storage_units });
-
-            } catch (err) {
-                console.error('Error processing inventory:', err);
-                client.logOff();
-                reject(err);
-            }
-        });
-
-        client.once('error', (err) => {
-            console.error('Steam login error:', err);
-            reject({ success: false, err, item_data: [], steamID: null, storage_units: [] });
-        });
-    });
-}
-
-// Helper to clean item
-function mapInventoryItem(item, location) {
-    const {
-        def_index, stickers, paint_wear, attribute, position, level, custom_desc, flags, quality,
-        original_id, origin, interior_item, style, in_use, equipped_state, kill_eater_score_type, kill_eater_value,
-        ...rest
-    } = item;
-
-    if (def_index === 1209 && Array.isArray(stickers) && stickers.length > 0) {
-        return { def_index, sticker_id: stickers[0].sticker_id, ...rest, quality, location };
-    }
-    if (paint_wear) {
-        const wear_name = getWearName(paint_wear);
-        if (kill_eater_score_type === 0) {
-            return { def_index, ...rest, quality, paint_wear, wear_name, sttattrak_count: kill_eater_value, stickers, is_stattrak: true, is_souvenir: false, location };
-        }
-        if (quality === 12) {
-            return { def_index, ...rest, quality, paint_wear, wear_name, sttattrak_count: kill_eater_value, stickers, is_stattrak: false, is_souvenir: true, location };
-        }
-        return { def_index, ...rest, quality, paint_wear, wear_name, stickers, is_stattrak: false, is_souvenir: false, location };
-    }
-    return { def_index, ...rest, quality, location };
-}
-
-// Helper to fetch casket items
-async function getCasketItems(csgo, item) {
-    return new Promise((resolve, reject) => {
-        csgo.getCasketContents(item.id, (err, items) => {
-            if (err) {
-                reject(new Error('Error fetching casket contents: ' + err));
             } else {
-                const mapped = items.map(i => mapInventoryItem(i, item.custom_name));
-                resolve(mapped);
+                console.log('Inventory not available.');
+                client.logOff();
+                reject(new Error('Inventory not available.'));
             }
+        });
+
+        client.on('error', (err) => {
+            console.error('Steam login error:', err);
+            reject({ success: false, err, item_data: [], steamID: null, storage_units: []});
         });
     });
 }
