@@ -524,7 +524,7 @@ import Image from "next/image"
       </ScrollArea>
 
       {/* Weapon Type Selection Buttons */}
-      {items.length > 1 && (
+      { ((items[0].type === 'Gloves' || items[0].type === 'Knives') || items.length > 1) && (
         <div className="mt-4 border-t border-gray-700 pt-4">
           <h3 className="text-sm font-medium mb-2">Select weapon types for suggestions:</h3>
           <div className="flex flex-wrap gap-2 items-center">

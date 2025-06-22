@@ -5,6 +5,7 @@ import CRC32 from 'crc-32';
 import protobuf from 'protobufjs';
 import path from 'path';
 import { fetchData, getFullItemData, getFullPriceData, getFullSkinData } from "@/lib/data-loader"
+import { Console } from 'console';
 
 
 function findFloatRange(float) {
@@ -167,9 +168,13 @@ async function mergeData(mergedData) {
         for (const item of items) {
             const hasPaintIndex = Object.prototype.hasOwnProperty.call(item, 'paint_index');
             const hasStickerId = Object.prototype.hasOwnProperty.call(item, 'sticker_id');
-    
+            const isCharm = item.def_index === 1355;
+            
             let key;
-            if (!hasPaintIndex && !hasStickerId) {
+            if (isCharm) {
+                key = `no-paint-no-sticker-charm-${item.def_index}-${item.keychain_index}`;
+                // console.log('charm: ', item.keychain_index, key);
+            } else if (!hasPaintIndex && !hasStickerId) {
                 key = `no-paint-no-sticker-${item.def_index}`;
             } else if (!hasPaintIndex && hasStickerId) {
                 key = `no-paint-with-sticker-${item.def_index}-${item.sticker_id}`;
@@ -270,6 +275,9 @@ async function getItemInfoByDefIndex(old_data) {
         item = Object.values(full_skin_data).find(item => item.paint_index === old_data.paint_index.toString() && item.weapon.weapon_id === old_data.def_index);
     } else if (old_data.sticker_id) {
         item = Object.entries(full_item_data).find(([key]) => key.endsWith(`sticker-${old_data.sticker_id}`))?.[1];
+    } else if (old_data.hasOwnProperty('keychain_index')) {
+        item = Object.entries(full_item_data).find(([key]) => key.endsWith(`keychain-${old_data.keychain_index}`))?.[1];
+        console.log(item);
     } else {
         item = Object.entries(full_item_data).find(([key]) => !key.startsWith("sticker") && key.endsWith(`-${old_data.def_index}`))?.[1];
     }
@@ -300,12 +308,15 @@ async function getItemInfoByDefIndex(old_data) {
             category = 'sticker';
         } else if (item.type === 'Sticker Capsule' || item.type === 'Autograph Capsule') {
             category = 'container';
-        }
+        } 
         if (item.type === 'Case') {
             category = 'container';
         }
     } else if (item.category) {
         category = 'weapon';
+    } else if (item.name.split(' ')[0] === 'Charm') {
+        category = 'charm';
+        item.type = 'Keychain';
     } else {
         const customType = item.id.split("-")[0].replace(/^./, (c) => c);
         category = customType;
@@ -334,6 +345,8 @@ async function getItemInfoByDefIndex(old_data) {
         CSFloat = `https://csfloat.com/search?sort_by=lowest_price&category=${category}&min_float=${floatRange.min}&max_float=${floatRange.max}&def_index=${old_data.def_index}&paint_index=${old_data.paint_index}`
     } else if (old_data.sticker_id) {
         CSFloat = `https://csfloat.com/search?sort_by=lowest_price&sticker_index=${old_data.sticker_id}`
+    } else if (old_data.keychain_index) {
+        CSFloat = `https://csfloat.com/search?sort_by=lowest_price&keychain_index=${old_data.keychain_index}`
     } else {
         CSFloat = `https://csfloat.com/search?sort_by=lowest_price&def_index=${old_data.def_index}`
     }
@@ -357,8 +370,8 @@ async function getItemInfoByDefIndex(old_data) {
         SteamMarket = `https://steamcommunity.com/market/listings/730/${encodedString}`
     } else {
         const encodedString = encodeURIComponent(`${item.name}`)
-                .replace(/\(/g, "%28")
-                .replace(/\)/g, "%29");
+            .replace(/\(/g, "%28")
+            .replace(/\)/g, "%29");
         SteamMarket = `https://steamcommunity.com/market/listings/730/${encodedString}`
     }
 
@@ -528,11 +541,18 @@ export async function initializeCSGOInventory(authData, loginType) {
 
 // Helper to clean item
 function mapInventoryItem(item, location) {
+
     const {
         def_index, stickers, paint_wear, attribute, position, level, custom_desc, flags, quality,
         original_id, origin, interior_item, style, in_use, equipped_state, kill_eater_score_type, kill_eater_value,
         ...rest
     } = item;
+
+    if (def_index === 1355) {
+        const buffer = Buffer.from(attribute.find(attr => attr.def_index === 299).value_bytes);
+        const value = buffer.readUInt32LE(0);
+        return { def_index, ...rest, keychain_index: value, location };
+    }
 
     if (def_index === 1209 && Array.isArray(stickers) && stickers.length > 0) {
         return { def_index, sticker_id: stickers[0].sticker_id, ...rest, quality, location };

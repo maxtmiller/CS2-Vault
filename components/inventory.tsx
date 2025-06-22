@@ -34,6 +34,7 @@ export function Inventory({ steamId }: { steamId: string | null }) {
       container: false,
       sticker: false,
       agent: false,
+      charm: false,
     },
     exteriors: {
       "Factory New": false,

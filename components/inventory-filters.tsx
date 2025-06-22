@@ -33,6 +33,7 @@ export function InventoryFilters({
     container: false,
     sticker: false,
     agent: false,
+    charm: false,
   })
   const [exteriors, setExteriors] = useState({
     "Factory New": false,
@@ -120,6 +121,7 @@ export function InventoryFilters({
       container: false,
       sticker: false,
       agent: false,
+      charm: false,
     })
     setExteriors({
       "Factory New": false,
@@ -235,6 +237,14 @@ export function InventoryFilters({
                   onCheckedChange={(checked: Boolean) => handleCategoryChange("agent", checked === true)}
                 />
                 <Label htmlFor="category-agent">Agents</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="category-charm"
+                  checked={categories.charm}
+                  onCheckedChange={(checked: Boolean) => handleCategoryChange("charm", checked === true)}
+                />
+                <Label htmlFor="category-charm">Charms</Label>
               </div>
             </div>
           </AccordionContent>
