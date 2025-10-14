@@ -12,9 +12,21 @@ import { ChevronDown, Github, Linkedin, Instagram, Mail } from "lucide-react"
 import { SteamIcon } from "@/components/steam-icon"
 import { SelectedItems } from "@/components/selected-items"
 import Link from "next/link"
+import { useToast } from "@/hooks/use-toast"
+import { StringDecoder } from "string_decoder"
+import { DollarSign, Euro, PoundSterling } from "lucide-react"
 
+const currencies = [
+  { code: "USD", char: "$", rate: 1, icon: <DollarSign className="mr-2 h-4 w-4 text-green-500" /> },
+  { code: "EUR", char: "€", rate: 0.86, icon: <Euro className="mr-2 h-4 w-4 text-blue-500" /> },
+  { code: "GBP", char: "£", rate: 0.75, icon: <PoundSterling className="mr-2 h-4 w-4 text-purple-500" /> },
+];
+
+let initializedCurrency = false;
 
 export function Inventory({ steamId }: { steamId: string | null }) {
+  const [loginType, setLoginType] = useState<string>("")
+  const [selectedCurrency, setSelectedCurrency] = useState(localStorage.getItem("selected_currency") || "USD");
   const [items, setItems] = useState<InventoryItem[]>([])
   const [storageUnits, setStorageUnits] = useState<number>()
   const [error, setError] = useState<string | null>(null)
@@ -50,8 +62,10 @@ export function Inventory({ steamId }: { steamId: string | null }) {
     special: {
       "StatTrak™": false,
       Souvenir: false,
-      "Has Stickers": false,
-      "Has Name Tag": false,
+      "Stickers Applied": false,
+      "Name Tag": false,
+      "Tradable": false,
+      "Trade Protected": false,
     },
     types: {
       Pistols: false,
@@ -70,6 +84,7 @@ export function Inventory({ steamId }: { steamId: string | null }) {
     },
     storageUnits: {},
   })
+  const { toast } = useToast()
 
   const handleLogout = () => {
     localStorage.removeItem("login_type")
@@ -82,6 +97,28 @@ export function Inventory({ steamId }: { steamId: string | null }) {
         console.error("Logout error:", error)
       })
   }
+
+  function updateSteamPrices(multiplier: number) {
+    setItems((prevItems) =>
+      prevItems.map((item) => ({
+        ...item,
+        steam_price: item.steam_price !== null ? Number((item.steam_price * multiplier).toFixed(2)) : null,
+      }))
+    );
+  }
+
+  function getRateByCurrency(code: string) {
+    const currency = currencies.find(c => c.code === code);
+    return currency ? currency.rate : 1; // fallback to 1 if not found
+  }
+
+  useEffect(() => {
+    console.log("Currency changed to:", selectedCurrency);
+    const storedCurrency = localStorage.getItem("selected_currency");
+    updateSteamPrices(getRateByCurrency(selectedCurrency) / getRateByCurrency(storedCurrency || "USD"));
+    localStorage.setItem("selected_currency", selectedCurrency);
+  }, [selectedCurrency]);
+
 
   // Fetch inventory data
   useEffect(() => {
@@ -103,6 +140,10 @@ export function Inventory({ steamId }: { steamId: string | null }) {
         setStorageUnits(data.storage_units)
         setItems(items)
         setFilteredItems(items)
+        setLoginType(data.type)
+              
+        // On initial load, convert prices if needed
+        updateSteamPrices(getRateByCurrency(selectedCurrency));
 
         // Calculate initial filtered value (all items)
         const initialValue = items.reduce((sum, item) => sum + (item.steam_price || 0) * (item.quantity || 1), 0)
@@ -111,10 +152,22 @@ export function Inventory({ steamId }: { steamId: string | null }) {
         if (!data.success) {
           setTimeout(() => {
             handleLogout();
-          }, 7000);
+            toast({
+              title: "Error fetching invetory",
+              description: data.error,
+              variant: "destructive",
+            })
+          }, 150000);
+          throw new Error(`API error: Error inventory data`)
         }
+
+        // if (!data.success) {
+        //   setTimeout(() => {
+        //     handleLogout();
+        //   }, 12000);
+        // }
       } catch (error) {
-        console.error("Error loading inventory:", error)
+        console.log("Error loading inventory:", error)
       } finally {
         setLoading(false)
       }
@@ -256,7 +309,7 @@ export function Inventory({ steamId }: { steamId: string | null }) {
 
               {/* Right section */}
               <div className="flex items-center gap-4">
-                {steamId && <UserProfile steamId={steamId} />}
+                {steamId && <UserProfile steamId={steamId} currencies={currencies} selectedCurrency={selectedCurrency} setSelectedCurrency={setSelectedCurrency} />}
               </div>
             </div>
           </div>
@@ -266,12 +319,14 @@ export function Inventory({ steamId }: { steamId: string | null }) {
         <main ref={mainRef} className="container mx-auto p-4 pb-12 flex-grow">
           {/* Only show stats when not scrolled - with smooth transition */}
           <div
-            className={`mb-6 transition-all duration-300 ${isScrolled ? "opacity-0 max-h-0 overflow-hidden" : "opacity-100 max-h-40"}`}
+            className={`mb-6 transition-all duration-300 ${isScrolled ? "opacity-0 max-h-0 overflow-hidden" : "opacity-100 max-h-20"}`}
           >
             <InventoryStats
               items={items}
               storageUnits={storageUnits}
               filteredValue={filteredValue}
+              currencies={currencies}
+              selectedCurrency={selectedCurrency}
               hideId={true} // Hide the Steam ID box
             />
           </div>
@@ -306,6 +361,15 @@ export function Inventory({ steamId }: { steamId: string | null }) {
                     onSelectItem={handleSelectItem}
                     selectedItemIds={selectedItems.map((item) => item.id)}
                     error={error}
+                    currencies={currencies}
+                    selectedCurrency={selectedCurrency}
+                    setLoading={setLoading}
+                    setError={setError}
+                    setStorageUnits={setStorageUnits}
+                    setItems={setItems}
+                    setTotalFilteredItems={setFilteredItems}
+                    setFilteredValue={setFilteredValue}
+                    loginType={loginType}
                   />
 
                   {/* Show more button - only if there are more items to show */}

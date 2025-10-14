@@ -7,16 +7,20 @@ export function InventoryStats({
   items = [],
   storageUnits = 0,
   filteredValue = 0,
+  currencies,
+  selectedCurrency,
   hideId = false, // Add this prop to optionally hide the Steam ID
 }: {
   steamId?: string | null
   items?: InventoryItem[]
   storageUnits?: number
   filteredValue?: number
+  currencies: { code: string; char: string; rate: number; icon: React.ReactNode }[]
+  selectedCurrency?: string
   hideId?: boolean
 }) {
   // Calculate stats from items
-  const itemCount = items.length
+  const itemCount = items.reduce((sum, item) => sum + (item.quantity ?? 1), 0);
 
   // Count storage units
   const storageUnitCount = storageUnits || 0
@@ -42,11 +46,11 @@ export function InventoryStats({
       </div>
       <div className="rounded-lg border border-gray-800 bg-gray-950 p-4">
         <h3 className="text-sm font-medium text-gray-400">Filtered Value</h3>
-        <p className="mt-1 text-2xl font-bold text-green-500">${filteredValue.toFixed(2)}</p>
+        <p className="mt-1 text-2xl font-bold text-green-500">{currencies.find(c => c.code === selectedCurrency)?.char}{filteredValue.toFixed(2)}</p>
       </div>
       <div className="rounded-lg border border-gray-800 bg-gray-950 p-4">
         <h3 className="text-sm font-medium text-gray-400">Total Value</h3>
-        <p className="mt-1 text-2xl font-bold text-green-500">${totalValue}</p>
+        <p className="mt-1 text-2xl font-bold text-green-500">{currencies.find(c => c.code === selectedCurrency)?.char}{totalValue}</p>
       </div>
     </div>
   )

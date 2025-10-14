@@ -413,7 +413,7 @@ import Image from "next/image"
               ) : (
                 <>
                   <Send className="h-4 w-4 mr-2" />
-                  Recommend Crafts
+                  Recommend New Crafts
                 </>
               )}
             </Button>
@@ -431,7 +431,7 @@ import Image from "next/image"
                 ) : (
                   <>
                     <Send className="h-4 w-4 mr-2" />
-                    Recommend Items
+                    Recommend New Items
                   </>
                 )}
             </Button>

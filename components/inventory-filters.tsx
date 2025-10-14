@@ -49,8 +49,10 @@ export function InventoryFilters({
   const [special, setSpecial] = useState({
     "StatTrak™": false,
     "Souvenir": false,
-    "Has Stickers": false,
-    "Has Name Tag": false,
+    "Stickers Applied": false,
+    "Name Tag": false,
+    "Tradable": false,
+    "Trade Protected": false,
   })
   const [types, setTypes] = useState({
     Pistols: false,
@@ -137,8 +139,10 @@ export function InventoryFilters({
     setSpecial({
       "StatTrak™": false,
       "Souvenir": false,
-      "Has Stickers": false,
-      "Has Name Tag": false,
+      "Stickers Applied": false,
+      "Name Tag": false,
+      "Tradable": false,
+      "Trade Protected": false,
     })
     setTypes({
       Pistols: false,
@@ -186,7 +190,7 @@ export function InventoryFilters({
                 <Checkbox
                   id="storage-inventory"
                   checked={storage["Main Inventory"]}
-                  onCheckedChange={(checked: Boolean) => handleStorageChange("Main Inventory", checked === true)}
+                  onCheckedChange={(checked: Boolean | "indeterminate") => handleStorageChange("Main Inventory", checked === true)}
                 />
                 <Label htmlFor="storage-inventory">Main Inventory</Label>
               </div>
@@ -194,7 +198,7 @@ export function InventoryFilters({
                 <Checkbox
                   id="storage-units"
                   checked={storage["Storage Units"]}
-                  onCheckedChange={(checked: Boolean) => handleStorageChange("Storage Units", checked === true)}
+                  onCheckedChange={(checked: Boolean | "indeterminate") => handleStorageChange("Storage Units", checked === true)}
                 />
                 <Label htmlFor="storage-units">Storage Units</Label>
               </div>
@@ -210,7 +214,7 @@ export function InventoryFilters({
                 <Checkbox
                   id="category-weapon"
                   checked={categories.weapon}
-                  onCheckedChange={(checked: Boolean) => handleCategoryChange("weapon", checked === true)}
+                  onCheckedChange={(checked: Boolean | "indeterminate") => handleCategoryChange("weapon", checked === true)}
                 />
                 <Label htmlFor="category-weapon">Weapons</Label>
               </div>
@@ -218,7 +222,7 @@ export function InventoryFilters({
                 <Checkbox
                   id="category-sticker"
                   checked={categories.sticker}
-                  onCheckedChange={(checked: Boolean) => handleCategoryChange("sticker", checked === true)}
+                  onCheckedChange={(checked: Boolean | "indeterminate") => handleCategoryChange("sticker", checked === true)}
                 />
                 <Label htmlFor="category-sticker">Stickers</Label>
               </div>
@@ -226,7 +230,7 @@ export function InventoryFilters({
                 <Checkbox
                   id="category-container"
                   checked={categories.container}
-                  onCheckedChange={(checked: Boolean) => handleCategoryChange("container", checked === true)}
+                  onCheckedChange={(checked: Boolean | "indeterminate") => handleCategoryChange("container", checked === true)}
                 />
                 <Label htmlFor="category-container">Containers</Label>
               </div>
@@ -234,7 +238,7 @@ export function InventoryFilters({
                 <Checkbox
                   id="category-agent"
                   checked={categories.agent}
-                  onCheckedChange={(checked: Boolean) => handleCategoryChange("agent", checked === true)}
+                  onCheckedChange={(checked: Boolean | "indeterminate") => handleCategoryChange("agent", checked === true)}
                 />
                 <Label htmlFor="category-agent">Agents</Label>
               </div>
@@ -242,7 +246,7 @@ export function InventoryFilters({
                 <Checkbox
                   id="category-charm"
                   checked={categories.charm}
-                  onCheckedChange={(checked: Boolean) => handleCategoryChange("charm", checked === true)}
+                  onCheckedChange={(checked: Boolean | "indeterminate") => handleCategoryChange("charm", checked === true)}
                 />
                 <Label htmlFor="category-charm">Charms</Label>
               </div>
@@ -258,7 +262,7 @@ export function InventoryFilters({
                 <Checkbox
                   id="type-knife"
                   checked={types["Knives"]}
-                  onCheckedChange={(checked: Boolean) => handleTypeChange("Knives", checked === true)}
+                  onCheckedChange={(checked: Boolean | "indeterminate") => handleTypeChange("Knives", checked === true)}
                 />
                 <Label htmlFor="type-knife">Knives</Label>
               </div>
@@ -266,7 +270,7 @@ export function InventoryFilters({
                 <Checkbox
                   id="type-glove"
                   checked={types["Gloves"]}
-                  onCheckedChange={(checked: Boolean) => handleTypeChange("Gloves", checked === true)}
+                  onCheckedChange={(checked: Boolean | "indeterminate") => handleTypeChange("Gloves", checked === true)}
                 />
                 <Label htmlFor="type-glove">Gloves</Label>
               </div>
@@ -274,7 +278,7 @@ export function InventoryFilters({
                 <Checkbox
                   id="type-pistol"
                   checked={types["Pistols"]}
-                  onCheckedChange={(checked: Boolean) => handleTypeChange("Pistols", checked === true)}
+                  onCheckedChange={(checked: Boolean | "indeterminate") => handleTypeChange("Pistols", checked === true)}
                 />
                 <Label htmlFor="type-pistol">Pistols</Label>
               </div>
@@ -282,7 +286,7 @@ export function InventoryFilters({
                 <Checkbox
                   id="type-smg"
                   checked={types["SMGs"]}
-                  onCheckedChange={(checked: Boolean) => handleTypeChange("SMGs", checked === true)}
+                  onCheckedChange={(checked: Boolean | "indeterminate") => handleTypeChange("SMGs", checked === true)}
                 />
                 <Label htmlFor="type-smg">SMGs</Label>
               </div>
@@ -290,7 +294,7 @@ export function InventoryFilters({
                 <Checkbox
                   id="type-rifle"
                   checked={types["Rifles"]}
-                  onCheckedChange={(checked: Boolean) => handleTypeChange("Rifles", checked === true)}
+                  onCheckedChange={(checked: Boolean | "indeterminate") => handleTypeChange("Rifles", checked === true)}
                 />
                 <Label htmlFor="type-rifle">Rifles</Label>
               </div>
@@ -298,7 +302,7 @@ export function InventoryFilters({
                 <Checkbox
                   id="type-shotgun"
                   checked={types["Heavy"]}
-                  onCheckedChange={(checked: Boolean) => handleTypeChange("Heavy", checked === true)}
+                  onCheckedChange={(checked: Boolean | "indeterminate") => handleTypeChange("Heavy", checked === true)}
                 />
                 <Label htmlFor="type-shotgun">Shotguns</Label>
               </div>
@@ -314,7 +318,7 @@ export function InventoryFilters({
                 <Checkbox
                   id="exterior-fn"
                   checked={exteriors["Factory New"]}
-                  onCheckedChange={(checked: Boolean) => handleExteriorChange("Factory New", checked === true)}
+                  onCheckedChange={(checked: Boolean | "indeterminate") => handleExteriorChange("Factory New", checked === true)}
                 />
                 <Label htmlFor="exterior-fn">Factory New</Label>
               </div>
@@ -322,7 +326,7 @@ export function InventoryFilters({
                 <Checkbox
                   id="exterior-mw"
                   checked={exteriors["Minimal Wear"]}
-                  onCheckedChange={(checked: Boolean) => handleExteriorChange("Minimal Wear", checked === true)}
+                  onCheckedChange={(checked: Boolean | "indeterminate") => handleExteriorChange("Minimal Wear", checked === true)}
                 />
                 <Label htmlFor="exterior-mw">Minimal Wear</Label>
               </div>
@@ -330,7 +334,7 @@ export function InventoryFilters({
                 <Checkbox
                   id="exterior-ft"
                   checked={exteriors["Field-Tested"]}
-                  onCheckedChange={(checked: Boolean) => handleExteriorChange("Field-Tested", checked === true)}
+                  onCheckedChange={(checked: Boolean | "indeterminate") => handleExteriorChange("Field-Tested", checked === true)}
                 />
                 <Label htmlFor="exterior-ft">Field-Tested</Label>
               </div>
@@ -338,7 +342,7 @@ export function InventoryFilters({
                 <Checkbox
                   id="exterior-ww"
                   checked={exteriors["Well-Worn"]}
-                  onCheckedChange={(checked: Boolean) => handleExteriorChange("Well-Worn", checked === true)}
+                  onCheckedChange={(checked: Boolean | "indeterminate") => handleExteriorChange("Well-Worn", checked === true)}
                 />
                 <Label htmlFor="exterior-ww">Well-Worn</Label>
               </div>
@@ -346,7 +350,7 @@ export function InventoryFilters({
                 <Checkbox
                   id="exterior-bs"
                   checked={exteriors["Battle-Scarred"]}
-                  onCheckedChange={(checked: Boolean) => handleExteriorChange("Battle-Scarred", checked === true)}
+                  onCheckedChange={(checked: Boolean | "indeterminate") => handleExteriorChange("Battle-Scarred", checked === true)}
                 />
                 <Label htmlFor="exterior-bs">Battle-Scarred</Label>
               </div>
@@ -364,7 +368,7 @@ export function InventoryFilters({
                     <Checkbox
                       id={`storage-unit-${unit.toLowerCase().replace(/\s+/g, "-")}`}
                       checked={storageUnits[unit]}
-                      onCheckedChange={(checked: Boolean) => handleStorageUnitChange(unit, checked === true)}
+                      onCheckedChange={(checked: Boolean | "indeterminate") => handleStorageUnitChange(unit, checked === true)}
                     />
                     <Label htmlFor={`storage-unit-${unit.toLowerCase().replace(/\s+/g, "-")}`}>{unit}</Label>
                   </div>
@@ -382,7 +386,7 @@ export function InventoryFilters({
                 <Checkbox
                   id="special-stattrak"
                   checked={special["StatTrak™"]}
-                  onCheckedChange={(checked: Boolean) => handleSpecialChange("StatTrak™", checked === true)}
+                  onCheckedChange={(checked: Boolean | "indeterminate") => handleSpecialChange("StatTrak™", checked === true)}
                 />
                 <Label htmlFor="special-stattrak">StatTrak™</Label>
               </div>
@@ -390,25 +394,41 @@ export function InventoryFilters({
                 <Checkbox
                   id="special-souvenir"
                   checked={special["Souvenir"]}
-                  onCheckedChange={(checked: Boolean) => handleSpecialChange("Souvenir", checked === true)}
+                  onCheckedChange={(checked: Boolean | "indeterminate") => handleSpecialChange("Souvenir", checked === true)}
                 />
                 <Label htmlFor="special-souvenir">Souvenir</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="special-stickered"
-                  checked={special["Has Stickers"]}
-                  onCheckedChange={(checked: Boolean) => handleSpecialChange("Has Stickers", checked === true)}
+                  checked={special["Stickers Applied"]}
+                  onCheckedChange={(checked: Boolean | "indeterminate") => handleSpecialChange("Stickers Applied", checked === true)}
                 />
-                <Label htmlFor="special-stickered">Has Stickers</Label>
+                <Label htmlFor="special-stickered">Stickers Applied</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="special-nametag"
-                  checked={special["Has Name Tag"]}
-                  onCheckedChange={(checked: Boolean) => handleSpecialChange("Has Name Tag", checked === true)}
+                  checked={special["Name Tag"]}
+                  onCheckedChange={(checked: Boolean | "indeterminate") => handleSpecialChange("Name Tag", checked === true)}
                 />
-                <Label htmlFor="special-nametag">Has Name Tag</Label>
+                <Label htmlFor="special-nametag">Name Tag</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="special-tradable"
+                  checked={special["Tradable"]}
+                  onCheckedChange={(checked: Boolean | "indeterminate") => handleSpecialChange("Tradable", checked === true)}
+                />
+                <Label htmlFor="special-tradable">Tradable</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="special-tradeprotected"
+                  checked={special["Trade Protected"]}
+                  onCheckedChange={(checked: Boolean | "indeterminate") => handleSpecialChange("Trade Protected", checked === true)}
+                />
+                <Label htmlFor="special-tradeprotected">Trade Protected</Label>
               </div>
             </div>
           </AccordionContent>

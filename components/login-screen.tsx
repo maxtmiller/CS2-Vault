@@ -277,6 +277,9 @@ export function LoginScreen() {
                   Sign in with Steam
                 </Button>
               </div>
+              <p className="mt-4 text-center text-sm text-gray-400">
+                This will only accesses your public inventory, including tradable items.
+              </p>
             </TabsContent>
 
             <TabsContent value="qr" className="mt-4">
@@ -378,6 +381,9 @@ export function LoginScreen() {
                     </>
                   )}
                 </Button>
+                <p className="mt-4 text-center text-sm text-gray-400">
+                  This will access your full inventory, including non-tradable items and storage units.
+                </p>
               </div>
             </TabsContent>
           </Tabs>

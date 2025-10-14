@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import type { InventoryItem } from "@/lib/steam-api"
+import { refreshInventory, type InventoryItem, type Sticker } from "@/lib/steam-api"
 import type { FilterState } from "./inventory-filters"
 import { Button } from "@/components/ui/button"
 import { SteamIcon } from "@/components/steam-icon"
@@ -9,9 +9,12 @@ import { CSFloatIcon } from "@/components/csfloat-icon"
 import Image from "next/image"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { ArrowUpDown, DollarSign, Hash, Cloud, SquareArrowOutUpRight, Check } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { ArrowUpDown, DollarSign, Hash, Cloud, SquareArrowOutUpRight, Check, RefreshCw } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useToast } from "@/hooks/use-toast"
+import { set } from "date-fns"
 
 export function InventoryGrid({
   items,
@@ -22,6 +25,16 @@ export function InventoryGrid({
   onSelectItem,
   selectedItemIds = [],
   error,
+  currencies,
+  selectedCurrency,
+  setLoading,
+  setError,
+  setStorageUnits,
+  setItems,
+  setTotalFilteredItems,
+  setFilteredValue,
+  loginType,
+  onReload,
 }: {
   items: InventoryItem[]
   filters: FilterState
@@ -31,10 +44,25 @@ export function InventoryGrid({
   onSelectItem?: (item: InventoryItem) => void
   selectedItemIds?: string[]
   error: string | null
+  currencies: { code: string; char: string; rate: number; icon: React.ReactNode }[]
+  selectedCurrency?: string
+  setLoading: (loading: boolean) => void
+  setError: (error: string | null) => void
+  setStorageUnits: (units: number) => void
+  setItems: (items: InventoryItem[]) => void
+  setTotalFilteredItems: (items: InventoryItem[]) => void
+  setFilteredValue: (value: number) => void
+  loginType?: string
+  onReload?: (items: InventoryItem[]) => void
 }) {
   const [filteredItems, setFilteredItems] = useState<InventoryItem[]>(items)
   const [sortBy, setSortBy] = useState<"none" | "value-desc" | "value-asc" | "quantity-desc" | "quantity-asc" | "float-desc" | "float-asc">("value-desc")
   const filteredItemsRef = useRef<{ items: InventoryItem[]; totalValue: number }>({ items: [], totalValue: 0 })
+
+  const [showJwtInput, setShowJwtInput] = useState(false)
+  const [jwtToken, setJwtToken] = useState("")
+  const [isReloading, setIsReloading] = useState(false)
+  const { toast } = useToast()
 
   // Apply filters whenever items or filters change
   useEffect(() => {
@@ -107,10 +135,14 @@ export function InventoryGrid({
         filteredItems = result.filter((item) => item.is_stattrak === true);
       } else if (filter === "Souvenir") {
         filteredItems = result.filter((item) => item.is_souvenir === true);
-      } else if (filter === "Has Name Tag") {
+      } else if (filter === "Name Tag") {
         filteredItems = result.filter((item) => item.custom_name !== null && item.custom_name !== undefined);
-      } else if (filter == "Has Stickers") {
+      } else if (filter == "Stickers Applied") {
         filteredItems = result.filter((item) => item.paint_index && item.stickers);
+      } else if (filter == "Tradable") {
+        filteredItems = result.filter((item) => item.is_tradable === true);
+      } else if (filter == "Trade Protected") {
+        filteredItems = result.filter((item) => item.is_tradable === false);
       }
 
       // Append the filtered items to filteredResult
@@ -123,7 +155,7 @@ export function InventoryGrid({
       ))
     );
 
-    if (filters.special["Souvenir"] || filters.special["StatTrak™"] || filters.special["Has Name Tag"] || filters.special["Has Stickers"]) {
+    if (filters.special["Souvenir"] || filters.special["StatTrak™"] || filters.special["Name Tag"] || filters.special["Stickers Applied"] || filters.special["Tradable"] || filters.special["Trade Protected"]) {
       result = filteredSpecialResult;
     }
 
@@ -245,6 +277,80 @@ export function InventoryGrid({
     }
   }
 
+  const getRarityColorClassTxt = (rarity: string): string => {
+    switch (rarity) {
+      case "Consumer Grade":
+        return "text-gray-400"
+      case "Industrial Grade":
+        return "text-blue-400"
+      case "Mil-Spec Grade":
+        return "text-blue-400"
+      case "Restricted":
+        return "text-purple-400"
+      case "Classified":
+        return "text-pink-400"
+      case "Covert":
+        return "text-red-400"
+      case "Contraband":
+        return "text-amber-400"
+      case "Extraordinary":
+        return "text-yellow-300"
+      case "Exotic":
+        return "text-pink-400"
+      case "Remarkable":
+        return "text-purple-400"
+      case "High Grade":
+        return "text-blue-400"
+      case "Master":
+        return "text-red-400"
+      case "Superior":
+        return "text-pink-400"
+      case "Exceptional":
+        return "text-purple-400"
+      case "Distinguished":
+        return "text-blue-400"
+      default:
+        return "text-gray-600"
+    }
+  }
+
+  const getRarityColorClassBg = (rarity: string): string => {
+    switch (rarity) {
+      case "Consumer Grade":
+        return "border-gray-400"
+      case "Industrial Grade":
+        return "border-blue-400"
+      case "Mil-Spec Grade":
+        return "border-blue-400"
+      case "Restricted":
+        return "border-purple-400"
+      case "Classified":
+        return "border-pink-400"
+      case "Covert":
+        return "border-red-400"
+      case "Contraband":
+        return "border-amber-400"
+      case "Extraordinary":
+        return "border-yellow-300"
+      case "Exotic":
+        return "border-pink-400"
+      case "Remarkable":
+        return "border-purple-400"
+      case "High Grade":
+        return "border-blue-400"
+      case "Master":
+        return "border-red-400"
+      case "Superior":
+        return "border-pink-400"
+      case "Exceptional":
+        return "border-purple-400"
+      case "Distinguished":
+        return "border-blue-400"
+      default:
+        return "border-gray-600"
+    }
+  }
+
   const getWearAbrev = (wear_name: string): string => {
     switch (wear_name) {
       case "Factory New":
@@ -265,44 +371,196 @@ export function InventoryGrid({
   // Get visible items based on the limit
   const displayedItems = filteredItems.slice(0, visibleItems)
 
+  const handleReload = async () => {
+    if (!showJwtInput) {
+      // First click - show input field
+      setShowJwtInput(true)
+      return
+    }
+
+    if (!jwtToken.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a JWT token",
+        variant: "destructive",
+      })
+      return
+    }
+
+    console.log("Reloading inventory with JWT token...")
+
+    setIsReloading(true)
+    try {
+
+      let parsedJWT
+      try {
+        parsedJWT = JSON.parse(jwtToken)
+      } catch (error) {
+        toast({
+          title: "Invalid Token",
+          variant: "destructive",
+        })
+        throw new Error("Invalid JWT token")
+      }
+
+      console.log(JSON.parse(localStorage.getItem("login_type")))
+      const steamId = JSON.parse(JSON.parse(localStorage.getItem("login_type") || "{}")?.authData)?.steamid ?? null; // JSON.parse((await (await fetch(`/api/auth/access-cookie?name=steam_session`)).json()).value).steamId;
+      if (steamId != parsedJWT.steamid) {
+        console.log("Mistmatched SteamID's - Please Login Again");
+        toast({
+          title: "Inventory Refresh Failed",
+          description: "Mistmatched SteamID's - Please Login Again to view this inventory",
+          variant: "destructive",
+        })
+        throw new Error("Mistmatched SteamID's");
+      }
+
+
+      if (!parsedJWT.logged_in || !parsedJWT.steamid || !parsedJWT.accountid || !parsedJWT.account_name || !parsedJWT.token) {
+        toast({
+          title: "Invalid JWT Token",
+          description: "Please enter a valid JWT token",
+          variant: "destructive",
+        })
+        throw new Error("Invalid JWT token")
+      }
+
+      setLoading(true)
+      console.log("Fetching inventory with JWT token...")
+      const data = await refreshInventory(parsedJWT.steamid, jwtToken);
+      if (!data) {
+        toast({
+          title: "Invalid api response",
+          description: "Please try refreshing again",
+          variant: "destructive",
+        })
+        throw new Error(`API error: No inventory data found`)
+      }
+      
+      const items = data.item_data
+
+      console.log("Inventory.tsx: Fetched inventory data:", data)
+
+      if (!data.success) {
+        setTimeout(() => {
+          toast({
+            title: "Error fetching invetory",
+            description: data.error,
+            variant: "destructive",
+          })
+        }, 2000);
+        throw new Error(`API error: Error inventory data`)
+      }
+
+      setError(data.error)
+      setStorageUnits(data.storage_units)
+      setItems(items)
+      setTotalFilteredItems(items)
+
+      const initialValue = items.reduce((sum, item) => sum + (item.steam_price || 0) * (item.quantity || 1), 0)
+      setFilteredValue(initialValue)
+
+
+    } catch (error: unknown | any) {
+      console.log("Error reloading inventory:", error)
+      setShowJwtInput(false)
+      setLoading(false)
+      setJwtToken("")
+    } finally {
+      setIsReloading(false)
+      setLoading(false)
+    }
+  }
+
+  const handleCancel = () => {
+    setShowJwtInput(false)
+    setJwtToken("")
+  }
+
   return (
     <div>
       <div className="mb-4 flex justify-between items-center">
         <h2 className="text-xl font-bold">Results ({filteredItems.length})</h2>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="text-black bg-gray-200 hover:bg-gray-400">
-              <ArrowUpDown className="mr-2 h-4 w-4" />
-              Sort By
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 border-gray-600 p-2 rounded">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleReload}
+              disabled={isReloading}
+              className="border-gray-600 hover:bg-gray-700 bg-transparent"
+              title="Reload inventory with JWT token"
+            >
+              {isReloading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => handleSortChange("value-desc")}>
-              <DollarSign className="mr-2 h-4 w-4 text-green-500" />
-              Price: High to Low
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleSortChange("value-asc")}>
-              <DollarSign className="mr-2 h-4 w-4 text-green-500" />
-              Price: Low to High
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleSortChange("quantity-desc")}>
-              <Hash className="mr-2 h-4 w-4 text-blue-400" />
-              Quantity: High to Low
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleSortChange("quantity-asc")}>
-              <Hash className="mr-2 h-4 w-4 text-blue-400" />
-              Quantity: Low to High
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleSortChange("float-desc")}>
-              <Cloud className="mr-2 h-4 w-4 text-red-400" />
-              Float: High to Low
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleSortChange("float-asc")}>
-              <Cloud className="mr-2 h-4 w-4 text-red-400" />
-              Float: Low to High
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+
+            {showJwtInput && !isReloading && (
+              <>
+                <Input
+                  type="text"
+                  placeholder="Enter JWT token"
+                  value={jwtToken}
+                  onChange={(e) => setJwtToken(e.target.value)}
+                  className="w-64 bg-gray-900 border-gray-600 text-sm"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleReload()
+                    } else if (e.key === "Escape") {
+                      handleCancel()
+                    }
+                  }}
+                  autoFocus
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => window.open("https://steamcommunity.com/chat/clientjstoken", "_blank")}
+                  className="border-gray-600 hover:bg-gray-700 bg-transparent"
+                  title="Fetch new JWT token from Steam"
+                >
+                  <SquareArrowOutUpRight className="h-8 w-8" />
+                </Button>
+                <Button variant="ghost" size="sm" onClick={handleCancel} className="text-gray-400 hover:text-white">
+                  Cancel
+                </Button>
+              </>
+            )}
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="text-black bg-gray-200 hover:bg-gray-400">
+                <ArrowUpDown className="mr-2 h-4 w-4" />
+                Sort By
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleSortChange("value-desc")}>
+                <DollarSign className="mr-2 h-4 w-4 text-green-500" />
+                Price: High to Low
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleSortChange("value-asc")}>
+                <DollarSign className="mr-2 h-4 w-4 text-green-500" />
+                Price: Low to High
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleSortChange("quantity-desc")}>
+                <Hash className="mr-2 h-4 w-4 text-blue-400" />
+                Quantity: High to Low
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleSortChange("quantity-asc")}>
+                <Hash className="mr-2 h-4 w-4 text-blue-400" />
+                Quantity: Low to High
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleSortChange("float-desc")}>
+                <Cloud className="mr-2 h-4 w-4 text-red-400" />
+                Float: High to Low
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleSortChange("float-asc")}>
+                <Cloud className="mr-2 h-4 w-4 text-red-400" />
+                Float: Low to High
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {filteredItems.length === 0 ? (
@@ -330,8 +588,8 @@ export function InventoryGrid({
                 <TooltipTrigger asChild>
                   <Card
                     key={item.id}
-                    className={`overflow-hidden bg-gray-800 transition-all hover:scale-105 hover:shadow-lg border-2 ${
-                      selectedItemIds?.includes(item.id) ? "border-blue-500 ring-1 ring-blue-500" : "border-gray-500"
+                    className={`overflow-hidden ${getRarityColorClass(item.rarity_name)} transition-all hover:scale-105 hover:shadow-lg border-2 ${
+                      selectedItemIds?.includes(item.id) ? "border-blue-500 ring-1 ring-blue-500" : `${!item.is_tradable ? "border-red-400" : "border-green-400"}` // `${getRarityColorClassBg(item.rarity_name)}`
                     } ${isItemSelectable(item) ? "cursor-pointer" : ""}`}
                     onClick={(e) => isItemSelectable(item) && handleSelectItem(item)}
                   >
@@ -361,9 +619,9 @@ export function InventoryGrid({
                           Storage Unit
                         </div>
                       )} */}
-                      {item.stickers && item.stickers.length > 0 && (
+                      {(item.stickers as Sticker[])?.length > 0 && (
                         <div className="absolute flex justify-evenly bottom-0 left-0 right-0 p-1 text-center text-xs gap-2">
-                          {item.stickers?.map((sticker, index) => (
+                          {(item.stickers as Sticker[])?.map((sticker, index) => (
                             <Tooltip
                             key={index}
                             >
@@ -382,21 +640,21 @@ export function InventoryGrid({
                                       {sticker.name.split('|')[1]}
                                     </p> */}
                                     <p className="text-white text-xxs">{sticker.name.split('|')[1]}</p>
-                                    <p className="text-green-400 text-xxs">${Number(sticker.steam_price).toFixed(2)}</p>
+                                    <p className="text-green-400 text-xxs">{currencies.find(c => c.code === selectedCurrency)?.char}{Number(sticker.steam_price).toFixed(2)}</p>
                                   </div>
                                 </div>
                               </TooltipContent>
                             </Tooltip>
                           ))}
                         </div>
-                        )}
+                      )}
                     </div>
                     <CardContent className="p-2 bg-gray-900">
                     <div className="flex items-center space-x-2">
                       <span className={`inline-block h-2 w-2 shrink-0 ${getRarityColorClass(item.rarity_name)} rounded-full`}></span>
 
                       {item.name?.includes('|') && (
-                        <p className="text-xxs text-gray-300"> 
+                        <p className="text-xxs text-gray-300 truncate"> 
                         {item.name?.split('|')[0]
                           ? item.type === "Gloves" || item.type === "Knives"
                             ? item.name?.split('|')[0].split(' ')[0] + ' ' + item.name?.split('|')[0].split(' ')[2]
@@ -412,7 +670,7 @@ export function InventoryGrid({
                       )}
 
                       {!item.name?.includes('|') && (
-                        <p className="text-xxs text-gray-300">
+                        <p className="text-xxs text-gray-300 truncate">
                           {item.type?.includes('Capsule')
                             ? item.name?.match(/^.*\d+/)?.[0]
                             : item.type === 'Case'
@@ -458,16 +716,16 @@ export function InventoryGrid({
                     </div>
                       <div className="flex justify-between items-center mt-1">
                         {item.wear_name && (
-                            <p className="text-xs text-gray-300">{getWearAbrev(item.wear_name || '') || item.type || ''} - {(item.paint_wear ?? 0).toFixed(5)}</p>
+                            <p className="text-xs text-gray-300 truncate">{getWearAbrev(item.wear_name || '') || item.type || ''} {item.paint_wear === -1 ? "" : `- ${(item.paint_wear ?? 0).toFixed(5)}`}</p>
                           )}
                         {!item.wear_name && !item.sticker_id && (
-                            <p className="text-xs text-gray-300">{getWearAbrev(item.wear_name || '') || item.type || ''}</p>
+                            <p className="text-xs text-gray-300 truncate">{getWearAbrev(item.wear_name || '') || item.type || ''}</p>
                           )}
                         {item.sticker_id && (
-                            <p className="text-xs text-gray-300">{item.type + ' ' + item.name?.split('|')[0] || ''}</p>
+                            <p className="text-xs text-gray-300 truncate">{item.type + ' ' + item.name?.split('|')[0] || ''}</p>
                           )}
                         {item.steam_price && (
-                          <p className="text-xs font-medium text-green-400">${Number(item.steam_price * item.quantity).toFixed(2)}</p>
+                          <p className="text-xs font-medium text-green-400">{currencies.find(c => c.code === selectedCurrency)?.char}{Number(item.steam_price * item.quantity).toFixed(2)}</p>
                         )}
                       </div>
                   </CardContent>
@@ -489,7 +747,7 @@ export function InventoryGrid({
                       <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
 
                         <p className="text-gray-300">Rarity:</p>
-                        <p className="text-white">{item.rarity_name}</p>
+                        <p className={`${getRarityColorClassTxt(item.rarity_name)}`}>{item.rarity_name}</p>
 
                         {item.wear_name && (
                           <>
@@ -501,7 +759,11 @@ export function InventoryGrid({
                         {item.paint_wear !== undefined && (
                           <>
                             <p className="text-gray-300">Float:</p>
-                            <p className="font-mono text-white">{item.paint_wear.toFixed(10)}</p>
+                            { item.paint_wear === -1 ? (
+                              <p className="font-mono text-white">Unknown</p>
+                            ) : (
+                              <p className="font-mono text-white">{item.paint_wear.toFixed(10)}</p>
+                            )}
                           </>
                         )}
 
@@ -523,14 +785,14 @@ export function InventoryGrid({
                           {item.steam_price && (
                             <div>
                               <p className="text-xs text-gray-300">Steam Price</p>
-                              <p className="text-green-400 font-medium">${Number(item.steam_price).toFixed(2)}</p>
+                              <p className="text-green-400 font-medium">{currencies.find(c => c.code === selectedCurrency)?.char}{Number(item.steam_price).toFixed(2)}</p>
                             </div>
                           )}
 
                           {item.float_price && (
                             <div>
                               <p className="text-xs text-gray-300">Float Price</p>
-                              <p className="text-blue-400 font-medium">${item.float_price.toFixed(2)}</p>
+                              <p className="text-blue-400 font-medium">{currencies.find(c => c.code === selectedCurrency)?.char}{item.float_price.toFixed(2)}</p>
                             </div>
                           )}
                         </div>

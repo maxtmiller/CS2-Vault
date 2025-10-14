@@ -21,7 +21,7 @@ export async function fetchInventoryFromJSON(steamId: string): Promise<Inventory
 }
 
 export async function fetchAllInventoryData(authData: string, loginType: number): Promise<any | null> {
-  console.log("Fetching inventory from mock data...");
+  console.log("Fetching inventory from server...");
 
   try {
     const response = await fetch("/api/steam/retrieve-inventory", {
@@ -36,14 +36,21 @@ export async function fetchAllInventoryData(authData: string, loginType: number)
       throw new Error(`API error: ${response.status}`)
     }
 
-    const data = await response.json()
-    const storage_units = data.result.storage_units.length
-    const item_data = JSON.parse(data.result.item_data)
+    const reponse = await response.json()
+    const data = reponse.result;
 
-    return { success: true, item_data, storage_units, error: null }
-  } catch (error) {
-    console.error("Error fetching inventory:", error);
-    return { success: false, item_data: [], storage_units: 0, error: error || "default error"};
+    if (!data.success) {
+      console.log(data);
+      throw new Error(data?.details || "API Error: inventory fetch failed");
+    }
+
+    const storage_units = data.storage_units.length
+    const item_data = JSON.parse(data.item_data)
+
+    return { success: true, type: "jwt", item_data, storage_units, error: null }
+  } catch (error: unknown | any) {
+    console.log("Error fetching inventory:", error.message);
+    return { success: false, type: "jwt", item_data: [], storage_units: 0, error: error?.message};
   }
 }
 
@@ -62,13 +69,21 @@ export async function fetchVisibleInventoryData(steamId: string): Promise<any | 
       throw new Error(`API error: ${response.status}`)
     }
 
-    const data = await response.json()
-    const result = data.processedData.item_data
+    const reponse = await response.json()
+    const data = reponse.result;
 
-    return { success: true, item_data: result, storage_units: 0, error: null }
-  } catch (error) {
-    console.error("Error fetching inventory:", error)
-    return { success: false, item_data: [], storage_units: 0, error: error || "default error" };
+    if (!data.success) {
+      console.log(data);
+      throw new Error(data?.details || "API Error: inventory fetch failed");
+    }
+
+    const storage_units = data.storage_units.length
+    const item_data = JSON.parse(data.item_data)
+
+    return { success: true, type: "steam", item_data: item_data, storage_units: storage_units, error: null }
+  } catch (error: unknown | any) {
+    console.log("Error fetching inventory:", error)
+    return { success: false, type: "steam", item_data: [], storage_units: 0, error: error?.message };
   }
 }
 

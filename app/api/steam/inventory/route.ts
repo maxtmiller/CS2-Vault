@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
 
     // Get the JSON response from Steam
     const data = await response.json()
-    const processedData = await processInventoryData(data, steamId);
+    const result = await processInventoryData(data, steamId);
 
     const cookieStore = await cookies()
     cookieStore.set(
@@ -53,10 +53,10 @@ export async function GET(request: NextRequest) {
     )
 
     // Return the data to the client
-    return NextResponse.json({ processedData })
+    return NextResponse.json({ result })
   } catch (error) {
     console.error("Error fetching inventory:", error)
-    return NextResponse.json({ error: "Failed to fetch inventory data" }, { status: 500 })
+    return NextResponse.json({ result: { success: false, item_data: [], steamID: null, storage_units: [] } })
   }
 }
 

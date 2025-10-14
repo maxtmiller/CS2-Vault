@@ -5,6 +5,8 @@ import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DollarSign, Euro, PoundSterling, ChevronDown } from "lucide-react"
 
 interface ProfileData {
   steamID64: string
@@ -17,10 +19,19 @@ interface ProfileData {
   location?: string
 }
 
-export function UserProfile({ steamId }: { steamId: string }) {
+export function UserProfile({ steamId, currencies, selectedCurrency, setSelectedCurrency }: { 
+  steamId: string, 
+  currencies: { code: string; char: string; rate: number; icon: React.ReactNode }[],
+  selectedCurrency: string, 
+  setSelectedCurrency: (currency: string) => void 
+}) {
   const [profile, setProfile] = useState<ProfileData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  function handleCurrencyChange(currency: string) {
+    setSelectedCurrency(currency);
+  }
 
   useEffect(() => {
     async function fetchProfile() {
@@ -107,6 +118,24 @@ export function UserProfile({ steamId }: { steamId: string }) {
             className="object-cover"
             />
         </Link>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm" className="">
+              <p className="mr-2 text-sm text-600-white hover:text-blue">
+                {selectedCurrency}
+              </p>
+              <ChevronDown className="h-4 w-4 text-white" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {currencies.map((c) => (
+              <DropdownMenuItem key={c.code} onClick={() => handleCurrencyChange(c.code)}>
+                {c.icon}
+                {c.code}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
         <Button onClick={handleLogout} className="bg-red-600 text-white hover:bg-red-700 rounded-full">
             Logout
         </Button>

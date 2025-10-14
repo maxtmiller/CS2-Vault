@@ -1,5 +1,6 @@
 import type React from "react"
 import type { Metadata } from 'next'
+import { Toaster } from "@/components/ui/toaster"
 import { Analytics } from "@vercel/analytics/react"
 import './globals.css'
 
@@ -32,6 +33,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         {children}
+        <Toaster />
         <Analytics />
       </body>
     </html>

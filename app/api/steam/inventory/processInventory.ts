@@ -363,7 +363,8 @@ async function processItemData(desc: any, key: string, steamId: string): Promise
         csfloat: CSFloat,
         steam: SteamMarket,
         icon_url: imageUrl || "",
-        steam_price: price ? price.steam.last_ever : null
+        steam_price: price ? price.steam.last_ever : null,
+        is_tradable: true
     };
 
     const sticker_data = {
@@ -384,7 +385,8 @@ async function processItemData(desc: any, key: string, steamId: string): Promise
         csfloat: CSFloat,
         steam: SteamMarket,
         icon_url: imageUrl || "",
-        steam_price: price ? price.steam.last_ever : null
+        steam_price: price ? price.steam.last_ever : null,
+        is_tradable: true
     };
 
     const item_data = {
@@ -404,13 +406,15 @@ async function processItemData(desc: any, key: string, steamId: string): Promise
         csfloat: CSFloat,
         steam: SteamMarket,
         icon_url: imageUrl || "",
-        steam_price: price ? price.steam.last_ever : null
+        steam_price: price ? price.steam.last_ever : null,
+        is_tradable: true
     };
 
     const inspect_link = await generateInspectLinkFromObject(weapon_data as InspectItem);
     if (paint_index) {
         const final_item_data = {
             ...weapon_data,
+            paint_wear: -1,
             inspect_link: inspect_link
         };
         return final_item_data
@@ -431,14 +435,17 @@ async function mergeData(mergedData: string) {
       for (const item of items) {
         const hasPaintIndex = Object.prototype.hasOwnProperty.call(item, "paint_index")
         const hasStickerId = Object.prototype.hasOwnProperty.call(item, "sticker_id")
-  
-        let key
-        if (!hasPaintIndex && !hasStickerId) {
-          key = `no-paint-no-sticker-${item.def_index}`
+        const isCharm = item.def_index === 1355;
+            
+        let key;
+        if (isCharm) {
+            key = `no-paint-no-sticker-charm-${item.def_index}-${item.keychain_index}`;
+        } else if (!hasPaintIndex && !hasStickerId) {
+            key = `no-paint-no-sticker-${item.def_index}`;
         } else if (!hasPaintIndex && hasStickerId) {
-          key = `no-paint-with-sticker-${item.def_index}-${item.sticker_id}`
+            key = `no-paint-with-sticker-${item.def_index}-${item.sticker_id}`;
         } else {
-          key = `other-${item.def_index}-${Math.random()}`
+            key = `other-${item.def_index}-${Math.random()}`;
         }
   
         if (groupedItems.has(key)) {
@@ -498,7 +505,7 @@ export async function processInventoryData(data: any, steamId: string): Promise<
     const mergedJson = await mergeData(inventoryJson);
 
     // Parse the merged JSON string back into an array
-    const mergedData = JSON.parse(mergedJson);
+    const mergedData = mergedJson;
 
-    return { item_data: mergedData, steamID: steamId, storage_units: [] };
+    return { success: true, item_data: mergedData, steamID: steamId, storage_units: [] };
 }

@@ -173,7 +173,6 @@ async function mergeData(mergedData) {
             let key;
             if (isCharm) {
                 key = `no-paint-no-sticker-charm-${item.def_index}-${item.keychain_index}`;
-                // console.log('charm: ', item.keychain_index, key);
             } else if (!hasPaintIndex && !hasStickerId) {
                 key = `no-paint-no-sticker-${item.def_index}`;
             } else if (!hasPaintIndex && hasStickerId) {
@@ -277,7 +276,6 @@ async function getItemInfoByDefIndex(old_data) {
         item = Object.entries(full_item_data).find(([key]) => key.endsWith(`sticker-${old_data.sticker_id}`))?.[1];
     } else if (old_data.hasOwnProperty('keychain_index')) {
         item = Object.entries(full_item_data).find(([key]) => key.endsWith(`keychain-${old_data.keychain_index}`))?.[1];
-        console.log(item);
     } else {
         item = Object.entries(full_item_data).find(([key]) => !key.startsWith("sticker") && key.endsWith(`-${old_data.def_index}`))?.[1];
     }
@@ -381,10 +379,12 @@ async function getItemInfoByDefIndex(old_data) {
         type: item.type ?? item.category?.name ?? customType,
         category: category,
         csfloat: CSFloat,
+        quantity: old_data.quantity || 1,
         steam: SteamMarket,
         icon_url: item.image,
         inspect_link: inspect_link,
         steam_price: price ? price.steam.last_ever : null,
+        is_tradable: old_data.is_tradable,
     }
 
     return item ? item_data : null;
@@ -447,6 +447,14 @@ export async function initializeCSGOInventory(authData, loginType) {
         const storage_units = [];
         const client = new SteamUser();
         const csgo = new GlobalOffensive(client);
+
+        client.setMaxListeners(30);
+        csgo.setMaxListeners(30);
+
+        // Cleanup old listeners before adding new ones
+        // client.removeAllListeners();
+        // csgo.removeAllListeners();
+
         let steamID;
 
         function handleLoggedOn() {
@@ -500,7 +508,7 @@ export async function initializeCSGOInventory(authData, loginType) {
                                 storage_units.push({ name: item.custom_name, count: item.casket_contained_item_count });
                             })
                             .catch(err => {
-                                console.error('Error fetching casket contents:', err.message);
+                                console.log('Error fetching casket contents:', err.message);
                             });
                         casketItemsPromises.push(casketPromise);
                     } else {
@@ -523,18 +531,41 @@ export async function initializeCSGOInventory(authData, loginType) {
                 mergedData = await mergeData(mergedData);
                 mergedData = await appendInfo(mergedData);
 
+                // Cleanup listeners
+                client.removeAllListeners();
+                csgo.removeAllListeners();
+
                 resolve({ success: true, item_data: mergedData, steamID, storage_units });
 
             } catch (err) {
                 console.error('Error processing inventory:', err);
                 client.logOff();
+
+                // Cleanup listeners
+                client.removeAllListeners();
+                csgo.removeAllListeners();
+
                 reject(err);
             }
         });
 
         client.once('error', (err) => {
             console.error('Steam login error:', err);
-            reject({ success: false, err, item_data: [], steamID: null, storage_units: [] });
+
+            let error_details = '';
+            if (err.message === "AccessDenied") {
+                error_details = 'Invalid JWT token. Please try generating a new one.';
+            } else if (err.message === "InvalidPassword") {
+                error_details = 'Too many API requests. Please try again later.';
+            } else if (err.message === "LoggedInElsewhere") {
+                error_details = 'Your Steam account is logged in elsewhere. Please log out from other devices and try again.';
+            }
+
+            // Cleanup listeners
+            client.removeAllListeners();
+            csgo.removeAllListeners();
+
+            reject({ success: false, details: `${error_details}`, item_data: [], steamID: null, storage_units: [] });
         });
     });
 }
@@ -548,26 +579,31 @@ function mapInventoryItem(item, location) {
         ...rest
     } = item;
 
+    const givenDate = new Date(item.tradable_after);
+    const now = new Date();
+    let is_tradable = true;
+    if (givenDate > now) is_tradable = false;
+
     if (def_index === 1355) {
         const buffer = Buffer.from(attribute.find(attr => attr.def_index === 299).value_bytes);
         const value = buffer.readUInt32LE(0);
-        return { def_index, ...rest, keychain_index: value, location };
+        return { def_index, ...rest, quantity: 1, keychain_index: value, location, is_tradable };
     }
 
     if (def_index === 1209 && Array.isArray(stickers) && stickers.length > 0) {
-        return { def_index, sticker_id: stickers[0].sticker_id, ...rest, quality, location };
+        return { def_index, quantity: 1, sticker_id: stickers[0].sticker_id, ...rest, quality, location, is_tradable };
     }
     if (paint_wear) {
         const wear_name = getWearName(paint_wear);
         if (kill_eater_score_type === 0) {
-            return { def_index, ...rest, quality, paint_wear, wear_name, sttattrak_count: kill_eater_value, stickers, is_stattrak: true, is_souvenir: false, location };
+            return { def_index, ...rest, quantity: 1, quality, paint_wear, wear_name, sttattrak_count: kill_eater_value, stickers, is_stattrak: true, is_souvenir: false, location, is_tradable };
         }
         if (quality === 12) {
-            return { def_index, ...rest, quality, paint_wear, wear_name, sttattrak_count: kill_eater_value, stickers, is_stattrak: false, is_souvenir: true, location };
+            return { def_index, ...rest, quantity: 1, quality, paint_wear, wear_name, sttattrak_count: kill_eater_value, stickers, is_stattrak: false, is_souvenir: true, location, is_tradable };
         }
-        return { def_index, ...rest, quality, paint_wear, wear_name, stickers, is_stattrak: false, is_souvenir: false, location };
+        return { def_index, ...rest, quantity: 1, quality, paint_wear, wear_name, stickers, is_stattrak: false, is_souvenir: false, location, is_tradable };
     }
-    return { def_index, ...rest, quality, location };
+    return { def_index, ...rest, quantity: 1, quality, location, is_tradable };
 }
 
 // Helper to fetch casket items
@@ -583,3 +619,31 @@ async function getCasketItems(csgo, item) {
         });
     });
 }
+
+
+async function fetchCasketContentsWithRetry(csgo, casketId, retries = 3, delay = 5000) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const casketContents = await Promise.race([
+        new Promise((resolve, reject) => {
+          csgo.getCasketContents(casketId, (err, contents) => {
+            if (err) return reject(err);
+            resolve(contents);
+          });
+        }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 30000)), // custom 30s timeout
+      ]);
+
+      return casketContents;
+    } catch (err) {
+      console.warn(`Attempt ${attempt} failed: ${err.message}`);
+      if (attempt < retries) {
+        console.log(`Retrying in ${delay / 1000}s...`);
+        await new Promise(res => setTimeout(res, delay));
+      } else {
+        throw new Error(`Failed to load casket after ${retries} retries: ${err.message}`);
+      }
+    }
+  }
+}
+

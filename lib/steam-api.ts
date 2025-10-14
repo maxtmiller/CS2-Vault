@@ -1,7 +1,6 @@
 // Updated Steam API client with the correct item schema based on real data
 import { fetchAllInventoryData, fetchVisibleInventoryData} from '@/lib/utils';
 
-
 export interface InventoryItem {
   // Common fields for all items
   id: string
@@ -45,9 +44,17 @@ export interface InventoryItem {
   casket_id?: string | null
   inspect_link?: string | null
   reason?: string | null
+  is_tradable?: boolean
 }
 
-export async function fetchInventory(steamId: string): Promise<{ success: Boolean, item_data: InventoryItem[], storage_units: number, error: string | null }> {
+export interface Sticker {
+  name: string;
+  image: string;
+  steam_price?: number;
+  sticker_id?: number;
+}
+
+export async function fetchInventory(steamId: string): Promise<{ success: Boolean, type: string, item_data: InventoryItem[], storage_units: number, error: string | null }> {
   console.log(`Fetching inventory for Steam ID: ${steamId}`)
 
   const version = "1.0.4"
@@ -81,69 +88,71 @@ export async function fetchInventory(steamId: string): Promise<{ success: Boolea
     }
   }
 
+  const jwt = JSON.parse(localStorage.getItem("login_type") || "{}")?.authData
+
+  return refreshInventory(steamId, jwt)
+}
+
+export async function refreshInventory(steamId: string, jwt: string): Promise<{ success: Boolean, type: string, item_data: InventoryItem[], storage_units: number, error: string | null }> {
+  console.log(`Rereshing inventory data for Steam ID: ${steamId}`)
+  
+  const version = "1.0.4"
+
   try {
     const loginInfo = localStorage.getItem("login_type")
     if (loginInfo === null) {
-      throw new Error(`Login error: No login type found`)
+      const err = new Error("Failed to fetch inventory");
+      (err as any).data = `Login error: No login type found`;
+      throw err;
     }
 
     const parsedLoginInfo = JSON.parse(loginInfo)
     const type = parsedLoginInfo.type
+
+    let response;
     if (type === "jwt" || type === "qr") {
-      
-      const authData = parsedLoginInfo.authData
       const loginType = parsedLoginInfo.loginType
-
-      const response = await fetchAllInventoryData(authData, loginType)
-      if (!response) {
-        throw new Error(`API error: No inventory data found`)
-      }
-      localStorage.setItem(
-        "inventory_data",
-        JSON.stringify({
-          timestamp: Date.now(),
-          expiresAt: Date.now() + 24 * 60 * 60 * 1000,
-          success: response.success,
-          version: version,
-          data: JSON.stringify(response.item_data),
-          storage_units: response.storage_units,
-          error: response.error,
-        }),
-      )
-      return response
+      response = await fetchAllInventoryData(jwt, loginType)
     }  else if (type === "steam") {
-
-      const response = await fetchVisibleInventoryData(steamId)
-      if (!response) {
-        throw new Error(`API error: No inventory data found`)
-      }
-      localStorage.setItem(
-        "inventory_data",
-        JSON.stringify({
-          timestamp: Date.now(),
-          expiresAt: Date.now() + 24 * 60 * 60 * 1000,
-          success: response.success,
-          version: version,
-          data: JSON.stringify(response.item_data),
-          storage_units: response.storage_units,
-          error: response.error,
-        }),
-      )
-      return response
+      response = await fetchVisibleInventoryData(steamId)
     } else {
-      throw new Error(`Login error: Invalid login type`)
+      const err = new Error("Failed to fetch inventory");
+      (err as any).data = `Login error: Invalid login type`;
+      throw err;
     }
-  } catch (error) {
-    console.error("Error fetching inventory:")
-    try {
-      const response = await fetchVisibleInventoryData(steamId)
-      if (!response) {
-        throw new Error(`API error: No inventory data found`)
-      }
-      return response
-    } catch (error) {
-      return { success: true, item_data: getMockInventoryItems(), storage_units: 0, error: "default error"}
+
+    if (!response || !response.success) {
+      const err = new Error("Failed to fetch inventory");
+      (err as any).data = response.error;
+      throw err;
     }
+    localStorage.setItem(
+      "inventory_data",
+      JSON.stringify({
+        timestamp: Date.now(),
+        expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+        success: response.success,
+        version: version,
+        data: JSON.stringify(response.item_data),
+        storage_units: response.storage_units,
+        error: response.error,
+      }),
+    )
+    localStorage.setItem(
+      "login_type",
+      JSON.stringify({
+        timestamp: Date.now(),
+          expiresAt: Date.now() + 1000 * 5,
+          type: "jwt",
+          loginType: 2,
+          authData: parsedLoginInfo.type === "jwt" ? jwt : JSON.stringify({ steamid: steamId }),
+      }),
+    )
+    return response
+  } catch (error: Error | any) {
+    console.log(error);
+    const error_details = (error as any).data;
+    return { success: false, type: "any", item_data: [], storage_units: 0, error: error_details }
   }
 }
 

@@ -32,6 +32,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ result });
   } catch (error) {
     console.error("Error retrieving inventory:", error)
-    return NextResponse.json({ result: { success: false, details: error, item_data: [], steamID: null, storage_units: [] } })
+    return NextResponse.json({ result: error })
   }
 }

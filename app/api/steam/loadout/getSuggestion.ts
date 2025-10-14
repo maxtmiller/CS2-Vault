@@ -31,13 +31,14 @@ export async function getSuggestionCohere(items: any[]): Promise<any> {
             DO NOT provide an item that the user inputted. Do NOT provide the same item type (if they provided a glove, DO NOT provide a glove back)
             Provide as many items as needed to complete their loadout with the main guns. That is, provide AT LEAST 4 items.
             Give items in the same price range as the ones inputted, DO NOT provide an item that is much more expensive unless it is a knife or glove.
+            Also DO NOT suggest the same item types as the user provided, if they provided an AWP do not provide an AWP back.
 
             ## Style Guide
             Respond in following the exact json specification below for each item suggested, and put all the items into an array that you will return
             {
                 id: (a string starting from 0, unique for each one)
                 name: (the market hash name of the item, ie. USPS | Prinstream)
-                wear_name: (the wear_name of the item, ie. Factory New)
+                wear_name: (the wear_name of the item, ie. Factory New, Minimal Wear, Field-Tested, Well-Worn, or Battle-Scarred)
                 description: (why you think this is a good fit)
             }
         `;
