@@ -403,7 +403,6 @@ export function InventoryGrid({
         throw new Error("Invalid JWT token")
       }
 
-      console.log(JSON.parse(localStorage.getItem("login_type")))
       const steamId = JSON.parse(JSON.parse(localStorage.getItem("login_type") || "{}")?.authData)?.steamid ?? null; // JSON.parse((await (await fetch(`/api/auth/access-cookie?name=steam_session`)).json()).value).steamId;
       if (steamId != parsedJWT.steamid) {
         console.log("Mistmatched SteamID's - Please Login Again");

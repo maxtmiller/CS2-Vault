@@ -26,7 +26,13 @@ let initializedCurrency = false;
 
 export function Inventory({ steamId }: { steamId: string | null }) {
   const [loginType, setLoginType] = useState<string>("")
-  const [selectedCurrency, setSelectedCurrency] = useState(localStorage.getItem("selected_currency") || "USD");
+  const [selectedCurrency, setSelectedCurrency] = useState(() => {
+    if (typeof window !== "undefined") {
+      const storedCurrency = localStorage.getItem("selected_currency");
+      return storedCurrency || "USD";
+    }
+    return "USD";
+  });
   const [items, setItems] = useState<InventoryItem[]>([])
   const [storageUnits, setStorageUnits] = useState<number>()
   const [error, setError] = useState<string | null>(null)
@@ -84,6 +90,7 @@ export function Inventory({ steamId }: { steamId: string | null }) {
     },
     storageUnits: {},
   })
+  const currentPriceBaseRef = useRef("USD");
   const { toast } = useToast()
 
   const handleLogout = () => {
@@ -112,12 +119,35 @@ export function Inventory({ steamId }: { steamId: string | null }) {
     return currency ? currency.rate : 1; // fallback to 1 if not found
   }
 
+
   useEffect(() => {
-    console.log("Currency changed to:", selectedCurrency);
-    const storedCurrency = localStorage.getItem("selected_currency");
-    updateSteamPrices(getRateByCurrency(selectedCurrency) / getRateByCurrency(storedCurrency || "USD"));
-    localStorage.setItem("selected_currency", selectedCurrency);
+    const newCurrencyCode = selectedCurrency;
+    const oldCurrencyCode = currentPriceBaseRef.current;
+    
+    // 1. Get the rates
+    const oldRate = getRateByCurrency(oldCurrencyCode);
+    const newRate = getRateByCurrency(newCurrencyCode);
+    
+    // 2. Calculate the multiplier
+    // Convert from the old base (oldRate) to the new base (newRate)
+    const multiplier = newRate / oldRate;
+
+    // 3. Update the prices
+    updateSteamPrices(multiplier);
+
+    // 4. Update the reference and storage
+    currentPriceBaseRef.current = newCurrencyCode;
+    localStorage.setItem("selected_currency", newCurrencyCode);
+
   }, [selectedCurrency]);
+
+
+  useEffect(() => {
+    const storedCurrency = localStorage.getItem("selected_currency");
+    if (storedCurrency) {
+      setSelectedCurrency(storedCurrency); 
+    }
+  }, []);
 
 
   // Fetch inventory data
@@ -157,7 +187,7 @@ export function Inventory({ steamId }: { steamId: string | null }) {
               description: data.error,
               variant: "destructive",
             })
-          }, 150000);
+          }, 70000);
           throw new Error(`API error: Error inventory data`)
         }
 

@@ -57,7 +57,7 @@ export interface Sticker {
 export async function fetchInventory(steamId: string): Promise<{ success: Boolean, type: string, item_data: InventoryItem[], storage_units: number, error: string | null }> {
   console.log(`Fetching inventory for Steam ID: ${steamId}`)
 
-  const version = "1.0.4"
+  const version = "1.0.5"
   let skip = false
 
   // Check if we have cached inventory data
@@ -96,7 +96,7 @@ export async function fetchInventory(steamId: string): Promise<{ success: Boolea
 export async function refreshInventory(steamId: string, jwt: string): Promise<{ success: Boolean, type: string, item_data: InventoryItem[], storage_units: number, error: string | null }> {
   console.log(`Rereshing inventory data for Steam ID: ${steamId}`)
   
-  const version = "1.0.4"
+  const version = "1.0.5"
 
   try {
     const loginInfo = localStorage.getItem("login_type")

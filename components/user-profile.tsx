@@ -61,6 +61,7 @@ export function UserProfile({ steamId, currencies, selectedCurrency, setSelected
   const handleLogout = () => {
     localStorage.removeItem("login_type")
     localStorage.removeItem("inventory_data")
+    localStorage.removeItem("selected_currency")
     fetch(`/api/auth/logout?steamid=${steamId}`, { method: "POST" })
       .then(() => {
         window.location.replace("/")
