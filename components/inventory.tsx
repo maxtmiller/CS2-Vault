@@ -180,14 +180,14 @@ export function Inventory({ steamId }: { steamId: string | null }) {
         setFilteredValue(initialValue)
 
         if (!data.success) {
+          toast({
+            title: "Error fetching invetory",
+            description: data.error,
+            variant: "destructive",
+          })
           setTimeout(() => {
             handleLogout();
-            toast({
-              title: "Error fetching invetory",
-              description: data.error,
-              variant: "destructive",
-            })
-          }, 70000);
+          }, 5000);
           throw new Error(`API error: Error inventory data`)
         }
 

@@ -57,7 +57,7 @@ export interface Sticker {
 export async function fetchInventory(steamId: string): Promise<{ success: Boolean, type: string, item_data: InventoryItem[], storage_units: number, error: string | null }> {
   console.log(`Fetching inventory for Steam ID: ${steamId}`)
 
-  const version = "1.0.5"
+  const version = "1.0.6"
   let skip = false
 
   // Check if we have cached inventory data
@@ -80,11 +80,11 @@ export async function fetchInventory(steamId: string): Promise<{ success: Boolea
         }
       }
       if (!skip) {
-        return { success: false, item_data: [], storage_units: 0, error: "cached data expired"}
+        return { success: false, type: "any", item_data: [], storage_units: 0, error: "Cached inventory data expired. Please login again."}
       }
     }
     if (!skip) {
-      return { success: parsedInventoryData.success, item_data: data, storage_units: parsedInventoryData.storage_units, error: parsedInventoryData.error }
+      return { success: parsedInventoryData.success, type: "any", item_data: data, storage_units: parsedInventoryData.storage_units, error: parsedInventoryData.error }
     }
   }
 
@@ -96,7 +96,7 @@ export async function fetchInventory(steamId: string): Promise<{ success: Boolea
 export async function refreshInventory(steamId: string, jwt: string): Promise<{ success: Boolean, type: string, item_data: InventoryItem[], storage_units: number, error: string | null }> {
   console.log(`Rereshing inventory data for Steam ID: ${steamId}`)
   
-  const version = "1.0.5"
+  const version = "1.0.6"
 
   try {
     const loginInfo = localStorage.getItem("login_type")
