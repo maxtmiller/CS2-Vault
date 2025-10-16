@@ -7,7 +7,7 @@ import { CSFloatIcon } from "@/components/csfloat-icon"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { X, Send, SquareArrowOutUpRight, Plus, Loader2, ChevronLeft, ChevronRight } from "lucide-react"
+import { X, Send, SquareArrowOutUpRight, Plus, Loader2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
 
@@ -112,14 +112,14 @@ export function SelectedItems({ items, onRemoveItem, onClearAll }: SelectedItems
       setResponseItems(Array.isArray(data) ? data : [])
 
       toast({
-        title: "Items submitted successfully",
-        description: `${items.length} items have been processed`,
+        title: "Craft suggestions received",
+        description: `${data.length} crafts have been recommended.`,
       })
     } catch (error) {
-      console.log("Error submitting items:", error)
+      console.log("Error submitting crafts:", error)
       toast({
-        title: "Submission failed",
-        description: error instanceof Error ? error.message : "Failed to submit items",
+        title: "Craft suggestion failed",
+        description: error instanceof Error ? error.message : "Failed to recommend crafts",
         variant: "destructive",
       })
 
@@ -250,14 +250,14 @@ export function SelectedItems({ items, onRemoveItem, onClearAll }: SelectedItems
       setResponseItems(Array.isArray(data) ? data : [])
 
       toast({
-        title: "Items submitted successfully",
-        description: `${items.length} items have been processed`,
+        title: "Loadout suggestions received",
+        description: `${data.length} items have been recommended.`,
       })
     } catch (error) {
       console.error("Error submitting items:", error)
       toast({
-        title: "Submission failed",
-        description: error instanceof Error ? error.message : "Failed to submit items",
+        title: "Loadout suggestions failed",
+        description: error instanceof Error ? error.message : "Failed to recommend items",
         variant: "destructive",
       })
 
