@@ -191,7 +191,7 @@ export async function getSuggestionItemInfo(
     }
 
     const item_data: ItemData = {
-        id: items.id,
+        id: item.id,
         def_index: item.weapon.weapon_id,
         name: item.name,
         paint_index: parseInt(item.paint_index, 10),

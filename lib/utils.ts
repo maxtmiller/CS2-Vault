@@ -4,7 +4,7 @@ import { InventoryItem } from "@/lib/steam-api"
 
 
 export async function fetchInventoryFromJSON(steamId: string): Promise<InventoryItem[]> {
-  console.log("Fetching inventory from mock data...");
+  console.log("Fetching inventory data from json...");
 
   try {
     const response = await fetch(`/api/steam/fetch-inventory?steamid=${steamId}`);
@@ -21,7 +21,7 @@ export async function fetchInventoryFromJSON(steamId: string): Promise<Inventory
 }
 
 export async function fetchAllInventoryData(authData: string, loginType: number): Promise<any | null> {
-  console.log("Fetching inventory from server...");
+  console.log("Fetching private inventory data from steam client...");
 
   try {
     const response = await fetch("/api/steam/retrieve-inventory", {
@@ -56,8 +56,9 @@ export async function fetchAllInventoryData(authData: string, loginType: number)
 
 
 export async function fetchVisibleInventoryData(steamId: string): Promise<any | null> {
+  console.log("Fetching public inventory data...");
+
   try {
-    // Use our proxy endpoint instead of calling Steam directly
     const response = await fetch(`/api/steam/inventory?steamid=${steamId}`, {
       method: "GET",
       headers: {

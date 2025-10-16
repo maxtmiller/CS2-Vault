@@ -14,7 +14,6 @@ import { ArrowUpDown, DollarSign, Hash, Cloud, SquareArrowOutUpRight, Check, Ref
 import { Badge } from "@/components/ui/badge"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useToast } from "@/hooks/use-toast"
-import { set } from "date-fns"
 
 export function InventoryGrid({
   items,
@@ -57,12 +56,12 @@ export function InventoryGrid({
 }) {
   const [filteredItems, setFilteredItems] = useState<InventoryItem[]>(items)
   const [sortBy, setSortBy] = useState<"none" | "value-desc" | "value-asc" | "quantity-desc" | "quantity-asc" | "float-desc" | "float-asc">("value-desc")
-  const filteredItemsRef = useRef<{ items: InventoryItem[]; totalValue: number }>({ items: [], totalValue: 0 })
-
   const [showJwtInput, setShowJwtInput] = useState(false)
   const [jwtToken, setJwtToken] = useState("")
   const [isReloading, setIsReloading] = useState(false)
+  const filteredItemsRef = useRef<{ items: InventoryItem[]; totalValue: number }>({ items: [], totalValue: 0 })
   const { toast } = useToast()
+
 
   // Apply filters whenever items or filters change
   useEffect(() => {
@@ -178,11 +177,14 @@ export function InventoryGrid({
     filteredItemsRef.current = filteredItemsData
   }, [items, filters, sortBy])
 
+
+  // Call callbacks when filtered items or their total value changes
   useEffect(() => {
     const { items, totalValue } = filteredItemsRef.current
 
     // Call callbacks with the latest data
-    if (onTotalValueChange) {
+    if (onTotalValueChange && selectedItemIds.length === 0) {
+      console.log("filtered value changed")
       onTotalValueChange(totalValue)
     }
 
@@ -190,6 +192,7 @@ export function InventoryGrid({
       onFilteredItemsChange(items)
     }
   }, [onTotalValueChange, onFilteredItemsChange])
+
 
   // Function to sort items
   const sortItems = (items: InventoryItem[], sortBy: string) => {
@@ -224,9 +227,12 @@ export function InventoryGrid({
     }
   }
 
+
+  // Handle sort changes
   const handleSortChange = (newSortBy: "value-desc" | "value-asc" | "quantity-desc" | "quantity-asc" | "float-desc" | "float-asc") => {
     setSortBy(newSortBy)
   }
+
 
   // Handle item selection
   const handleSelectItem = (item: InventoryItem) => {
@@ -235,11 +241,14 @@ export function InventoryGrid({
     }
   }
 
+
   // Check if an item is selectable (weapons or agents)
   const isItemSelectable = (item: InventoryItem) => {
     return item.category === "weapon" || item.type === "Agent"
   }
 
+
+  // Get rarity color background CSS for items
   const getRarityColorClass = (rarity: string): string => {
     switch (rarity) {
       case "Consumer Grade":
@@ -277,6 +286,8 @@ export function InventoryGrid({
     }
   }
 
+
+  // Get rarity color text CSS for items
   const getRarityColorClassTxt = (rarity: string): string => {
     switch (rarity) {
       case "Consumer Grade":
@@ -314,43 +325,8 @@ export function InventoryGrid({
     }
   }
 
-  const getRarityColorClassBg = (rarity: string): string => {
-    switch (rarity) {
-      case "Consumer Grade":
-        return "border-gray-400"
-      case "Industrial Grade":
-        return "border-blue-400"
-      case "Mil-Spec Grade":
-        return "border-blue-400"
-      case "Restricted":
-        return "border-purple-400"
-      case "Classified":
-        return "border-pink-400"
-      case "Covert":
-        return "border-red-400"
-      case "Contraband":
-        return "border-amber-400"
-      case "Extraordinary":
-        return "border-yellow-300"
-      case "Exotic":
-        return "border-pink-400"
-      case "Remarkable":
-        return "border-purple-400"
-      case "High Grade":
-        return "border-blue-400"
-      case "Master":
-        return "border-red-400"
-      case "Superior":
-        return "border-pink-400"
-      case "Exceptional":
-        return "border-purple-400"
-      case "Distinguished":
-        return "border-blue-400"
-      default:
-        return "border-gray-600"
-    }
-  }
 
+  // Get wear abbreviation
   const getWearAbrev = (wear_name: string): string => {
     switch (wear_name) {
       case "Factory New":
@@ -368,9 +344,12 @@ export function InventoryGrid({
     }
   }
 
+
   // Get visible items based on the limit
   const displayedItems = filteredItems.slice(0, visibleItems)
 
+
+  // Handle inventory reload with JWT token
   const handleReload = async () => {
     if (!showJwtInput) {
       // First click - show input field
@@ -403,7 +382,7 @@ export function InventoryGrid({
         throw new Error("Invalid JWT token")
       }
 
-      const steamId = JSON.parse(JSON.parse(localStorage.getItem("login_type") || "{}")?.authData)?.steamid ?? null; // JSON.parse((await (await fetch(`/api/auth/access-cookie?name=steam_session`)).json()).value).steamId;
+      const steamId = JSON.parse(JSON.parse(localStorage.getItem("login_type") || "{}")?.authData)?.steamid ?? null;
       if (steamId != parsedJWT.steamid) {
         console.log("Mistmatched SteamID's - Please Login Again");
         toast({
@@ -471,10 +450,13 @@ export function InventoryGrid({
     }
   }
 
+
+  // Handle canceling the JWT input
   const handleCancel = () => {
     setShowJwtInput(false)
     setJwtToken("")
   }
+
 
   return (
     <div>

@@ -6,7 +6,8 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { DollarSign, Euro, PoundSterling, ChevronDown } from "lucide-react"
+import { ChevronDown } from "lucide-react"
+
 
 interface ProfileData {
   steamID64: string
@@ -19,6 +20,7 @@ interface ProfileData {
   location?: string
 }
 
+
 export function UserProfile({ steamId, currencies, selectedCurrency, setSelectedCurrency }: { 
   steamId: string, 
   currencies: { code: string; char: string; rate: number; icon: React.ReactNode }[],
@@ -29,10 +31,14 @@ export function UserProfile({ steamId, currencies, selectedCurrency, setSelected
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+
+  // Handle currency change
   function handleCurrencyChange(currency: string) {
     setSelectedCurrency(currency);
   }
 
+
+  // Fetch user profile on component mount
   useEffect(() => {
     async function fetchProfile() {
       try {
@@ -58,6 +64,8 @@ export function UserProfile({ steamId, currencies, selectedCurrency, setSelected
     }
   }, [steamId])
 
+
+  // Function to handle logout and redirect to homepage
   const handleLogout = () => {
     localStorage.removeItem("login_type")
     localStorage.removeItem("inventory_data")
@@ -71,6 +79,8 @@ export function UserProfile({ steamId, currencies, selectedCurrency, setSelected
       })
   }
 
+
+  // Show loading state
   if (loading) {
     return (
       <div className="flex items-center space-x-4">
@@ -83,6 +93,8 @@ export function UserProfile({ steamId, currencies, selectedCurrency, setSelected
     )
   }
 
+
+  // Show error state
   if (error || !profile) {
     return (
       <div className="flex items-center justify-between">
@@ -97,49 +109,48 @@ export function UserProfile({ steamId, currencies, selectedCurrency, setSelected
     )
   }
 
-  const steamProfileUrl = `https://steamcommunity.com/profiles/${steamId}`
 
   return (
     <div className="flex items-center space-x-4">
-        <div className="flex-grow ml-4 flex flex-col justify-center items-end">
-            <h3 className="font-medium text-white">{profile.steamName}</h3>
-            <p className="text-xs text-gray-400">{steamId}</p>
-        </div>
-        <Link
-            href={steamProfileUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="relative h-10 w-10 overflow-hidden border-2 border-gray-500 rounded-full transition-all duration-300 hover:border-4 hover:border-blue-500"
-        >
-            <Image
-            src={profile.avatarMedium || "/placeholder.svg"}
-            alt={profile.steamName}
-            width={64}
-            height={64}
-            className="object-cover"
-            />
-        </Link>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="">
-              <p className="mr-2 text-sm text-600-white hover:text-blue">
-                {selectedCurrency}
-              </p>
-              <ChevronDown className="h-4 w-4 text-white" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {currencies.map((c) => (
-              <DropdownMenuItem key={c.code} onClick={() => handleCurrencyChange(c.code)}>
-                {c.icon}
-                {c.code}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <Button onClick={handleLogout} className="bg-red-600 text-white hover:bg-red-700 rounded-full">
-            Logout
-        </Button>
+      <div className="flex-grow ml-4 flex flex-col justify-center items-end">
+        <h3 className="font-medium text-white">{profile.steamName}</h3>
+        <p className="text-xs text-gray-400">{steamId}</p>
+      </div>
+      <Link
+        href={`https://steamcommunity.com/profiles/${steamId}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="relative h-10 w-10 overflow-hidden border-2 border-gray-500 rounded-full transition-all duration-300 hover:border-4 hover:border-blue-500"
+      >
+        <Image
+          src={profile.avatarMedium || "/placeholder.svg"}
+          alt={profile.steamName}
+          width={64}
+          height={64}
+          className="object-cover"
+        />
+      </Link>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm" className="">
+            <p className="mr-2 text-sm text-600-white hover:text-blue">
+              {selectedCurrency}
+            </p>
+            <ChevronDown className="h-4 w-4 text-white" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {currencies.map((c) => (
+            <DropdownMenuItem key={c.code} onClick={() => handleCurrencyChange(c.code)}>
+              {c.icon}
+              {c.code}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <Button onClick={handleLogout} className="bg-red-600 text-white hover:bg-red-700 rounded-full">
+          Logout
+      </Button>
     </div>
   )
 }

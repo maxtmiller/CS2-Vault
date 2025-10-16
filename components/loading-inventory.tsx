@@ -13,4 +13,3 @@ export function LoadingInventory() {
     </div>
   )
 }
-

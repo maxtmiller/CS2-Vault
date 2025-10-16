@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Search, RotateCcw } from "lucide-react"
 
-// Update the FilterState type to include all filter categories
+
 export type FilterState = {
   searchTerm: string
   categories: Record<string, boolean>
@@ -19,10 +19,10 @@ export type FilterState = {
   storageUnits: Record<string, boolean>
 }
 
-// Update the InventoryFilters component to include all filter categories
+
 export function InventoryFilters({
   onFilterChange,
-  storageUnitNames = [], // Add parameter to receive available storage unit names
+  storageUnitNames = [],
 }: {
   onFilterChange: (filters: FilterState) => void
   storageUnitNames?: string[]
@@ -62,9 +62,8 @@ export function InventoryFilters({
     Knives: false,
     Gloves: false
   })
-
-  // New state for specific storage units
   const [storageUnits, setStorageUnits] = useState<Record<string, boolean>>({})
+
 
   // Initialize storage units state when storageUnitNames changes
   useEffect(() => {
@@ -76,6 +75,7 @@ export function InventoryFilters({
       setStorageUnits(newStorageUnits)
     }
   }, [storageUnitNames])
+
 
   // Update filters when any filter state changes
   useEffect(() => {
@@ -89,6 +89,7 @@ export function InventoryFilters({
       storageUnits,
     })
   }, [searchTerm, categories, exteriors, storage, special, types, storageUnits, onFilterChange])
+
 
   // Handle checkbox changes
   const handleCategoryChange = (category: string, checked: boolean) => {
@@ -114,6 +115,7 @@ export function InventoryFilters({
   const handleStorageUnitChange = (unit: string, checked: boolean) => {
     setStorageUnits((prev) => ({ ...prev, [unit]: checked }))
   }
+
 
   // Reset all filters
   const resetFilters = () => {
@@ -160,6 +162,7 @@ export function InventoryFilters({
     })
     setStorageUnits(resetStorageUnits)
   }
+
 
   return (
     <div className="space-y-6 rounded-lg border border-gray-800 bg-gray-900 p-4 shadow-lg">
@@ -449,4 +452,3 @@ export function InventoryFilters({
     </div>
   )
 }
-

@@ -1,137 +1,143 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState, useEffect } from "react"
 import type { InventoryItem } from "@/lib/steam-api"
 import { SteamIcon } from "@/components/steam-icon"
 import { CSFloatIcon } from "@/components/csfloat-icon"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { X, Send, SquareArrowOutUpRight, Plus, Loader2 } from "lucide-react"
+import { X, Send, SquareArrowOutUpRight, Plus, Loader2, ChevronLeft, ChevronRight } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import Image from "next/image"
 
-  interface SelectedItemsProps {
-    items: InventoryItem[]
-    onRemoveItem: (id: string) => void
-    onClearAll: () => void
-  }
-  
-  export function SelectedItems({ items, onRemoveItem, onClearAll }: SelectedItemsProps) {
-    const [jsonResult, setJsonResult] = useState<string | null>(null)
-    const [responseItems, setResponseItems] = useState<InventoryItem[]>([])
-    const [isLoading, setIsLoading] = useState(false)
-    const [isLoadingCraft, setIsLoadingCraft] = useState(false)
-    const [isLoadingMore, setIsLoadingMore] = useState(false)
-    const [isLoadingMoreCrafts, setIsLoadingMoreCrafts] = useState(false)
-    const [selectedWeaponTypes, setSelectedWeaponTypes] = useState<string[]>(["any"])
-    const { toast } = useToast()
+interface SelectedItemsProps {
+  items: InventoryItem[]
+  onRemoveItem: (id: string) => void
+  onClearAll: () => void
+}
 
-    const weaponTypes = [
-      { id: "pistol", name: "Pistols" },
-      { id: "smg", name: "SMGs" },
-      { id: "rifle", name: "Rifles" },
-      { id: "sniper", name: "Snipers" },
-      { id: "shotgun", name: "Shotguns" },
-      { id: "machinegun", name: "Machine Guns" },
-      { id: "knife", name: "Knives" },
-      { id: "gloves", name: "Gloves" },
-    ]
-  
-    // Toggle weapon type selection
-    const toggleWeaponType = (typeId: string) => {
-      if (typeId === "any") {
-        // If "any" is clicked, select only "any" and deselect others
-        setSelectedWeaponTypes(["any"])
-      } else {
-        setSelectedWeaponTypes((prev) => {
-          // If another type is selected, remove "any" from the selection
-          let newSelection = prev.filter((id) => id !== "any")
-  
-          // Toggle the selected type
-          if (newSelection.includes(typeId)) {
-            const newSelectionFiltered = newSelection.filter((id) => id !== typeId)
-            newSelection = newSelectionFiltered
-          } else {
-            newSelection.push(typeId)
-          }
-  
-          // If no types are selected, select "any" again
-          if (newSelection.length === 0) {
-            return ["any"]
-          }
-  
-          return newSelection
-        })
-      }
-    }
+export function SelectedItems({ items, onRemoveItem, onClearAll }: SelectedItemsProps) {
+  const [jsonResult, setJsonResult] = useState<string | null>(null)
+  const [responseItems, setResponseItems] = useState<InventoryItem[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingCraft, setIsLoadingCraft] = useState(false)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [isLoadingMoreCrafts, setIsLoadingMoreCrafts] = useState(false)
+  const [selectedWeaponTypes, setSelectedWeaponTypes] = useState<string[]>(["any"])
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const { toast } = useToast()
 
-    const handleSubmitCrafts = async () => {
-      if (items.length === 0) return
-
-      const item_data = [];
-      for (const item of items) {
-        item_data.push(item);
-      }
-
-      const requestData = {
-        item: item_data[0],
-      }
-
-      const payload = {
-        type: "crafts",
-        data: requestData,
-      }
+  // Define weapon types for selection
+  const weaponTypes = [
+    { id: "pistol", name: "Pistols" },
+    { id: "smg", name: "SMGs" },
+    { id: "rifle", name: "Rifles" },
+    { id: "sniper", name: "Snipers" },
+    { id: "shotgun", name: "Shotguns" },
+    { id: "machinegun", name: "Machine Guns" },
+    { id: "knife", name: "Knives" },
+    { id: "gloves", name: "Gloves" },
+  ]
   
-      setIsLoadingCraft(true)
-      try {
-        // Call the API with the selected items
-        const response = await fetch("/api/steam/loadout", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        })
-  
-        if (!response.ok) {
-          throw new Error(`Error: ${response.status}`)
+
+  // Toggle weapon type selection
+  const toggleWeaponType = (typeId: string) => {
+    if (typeId === "any") {
+      // If "any" is clicked, select only "any" and deselect others
+      setSelectedWeaponTypes(["any"])
+    } else {
+      setSelectedWeaponTypes((prev) => {
+        // If another type is selected, remove "any" from the selection
+        let newSelection = prev.filter((id) => id !== "any")
+
+        // Toggle the selected type
+        if (newSelection.includes(typeId)) {
+          const newSelectionFiltered = newSelection.filter((id) => id !== typeId)
+          newSelection = newSelectionFiltered
+        } else {
+          newSelection.push(typeId)
         }
-  
-        const data = await response.json()
-  
-        // Display the JSON data
-        setJsonResult(JSON.stringify(data, null, 2))
-  
-        // Store the response items
-        setResponseItems(Array.isArray(data) ? data : [])
-  
-        toast({
-          title: "Items submitted successfully",
-          description: `${items.length} items have been processed`,
-        })
-      } catch (error) {
-        console.error("Error submitting items:", error)
-        toast({
-          title: "Submission failed",
-          description: error instanceof Error ? error.message : "Failed to submit items",
-          variant: "destructive",
-        })
-  
-        // For demo purposes, show the items that were submitted
-        setJsonResult(JSON.stringify(items, null, 2))
-        setResponseItems(items)
-      } finally {
-        setIsLoadingCraft(false)
-      }
+
+        // If no types are selected, select "any" again
+        if (newSelection.length === 0) {
+          return ["any"]
+        }
+
+        return newSelection
+      })
+    }
+  }
+
+
+  // Handle requesting more crafts
+  const handleSubmitCrafts = async () => {
+    if (items.length === 0) return
+
+    const item_data = [];
+    for (const item of items) {
+      item_data.push(item);
     }
 
-    // Handle requesting more items
-    const handleRequestMoreCrafts = async () => {
-      if (isLoadingMoreCrafts) return
+    const requestData = {
+      item: item_data[0],
+    }
 
-      setIsLoadingMoreCrafts(true)
-      try {
+    const payload = {
+      type: "crafts",
+      data: requestData,
+    }
+
+    setIsLoadingCraft(true)
+    try {
+      // Call the API with the selected items
+      const response = await fetch("/api/steam/loadout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      // Display the JSON data
+      setJsonResult(JSON.stringify(data, null, 2))
+
+      // Store the response items
+      setResponseItems(Array.isArray(data) ? data : [])
+
+      toast({
+        title: "Items submitted successfully",
+        description: `${items.length} items have been processed`,
+      })
+    } catch (error) {
+      console.log("Error submitting items:", error)
+      toast({
+        title: "Submission failed",
+        description: error instanceof Error ? error.message : "Failed to submit items",
+        variant: "destructive",
+      })
+
+      // For demo purposes, show the items that were submitted
+      setJsonResult(JSON.stringify(items, null, 2))
+      setResponseItems(items)
+    } finally {
+      setIsLoadingCraft(false)
+    }
+  }
+
+
+  // Handle requesting more items
+  const handleRequestMoreCrafts = async () => {
+    if (isLoadingMoreCrafts) return
+
+    setIsLoadingMoreCrafts(true)
+    try {
       // Combine selected items and existing response items for the API call
       const item_data = [];
       for (const item of items) {
@@ -149,15 +155,15 @@ import Image from "next/image"
 
       // Call the API with the combined items
       const response = await fetch("/api/steam/loadout", {
-          method: "POST",
-          headers: {
+        method: "POST",
+        headers: {
           "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
+        },
+        body: JSON.stringify(payload),
       })
 
       if (!response.ok) {
-          throw new Error(`Error: ${response.status}`)
+        throw new Error(`Error: ${response.status}`)
       }
 
       const data = await response.json()
@@ -182,158 +188,165 @@ import Image from "next/image"
           title: "More items requested",
           description: `Added ${uniqueNewItems.length} new items`,
       })
-      } catch (error) {
-      console.error("Error requesting more items:", error)
+    } catch (error) {
+      console.log("Error requesting more items:", error)
       toast({
-          title: "Request failed",
-          description: error instanceof Error ? error.message : "Failed to request more items",
-          variant: "destructive",
+        title: "Request failed",
+        description: error instanceof Error ? error.message : "Failed to request more items",
+        variant: "destructive",
       })
-      } finally {
+    } finally {
       setIsLoadingMoreCrafts(false)
-      }
+    }
   }
   
-    // Handle submitting items to the API
-    const handleSubmitItems = async () => {
-      if (items.length === 0) return
 
-      const item_data = [];
-      for (const item of items) {
-        const item_schema = {
-            name: item.name,
-            wear: item.wear_name,
-            price: item.steam_price,
-            image: item.icon_url,
-        };
-        item_data.push(item_schema);
+  // Handle submitting items to the API
+  const handleSubmitItems = async () => {
+    if (items.length === 0) return
+
+    const item_data = [];
+    for (const item of items) {
+      const item_schema = {
+        name: item.name,
+        wear: item.wear_name,
+        price: item.steam_price,
+        image: item.icon_url,
+      };
+      item_data.push(item_schema);
+    }
+
+    const requestData = {
+      items: item_data,
+      weapon_preferences: selectedWeaponTypes.includes("any") ? ["any"] : selectedWeaponTypes,
+    }
+
+    const payload = {
+      type: "items",
+      data: requestData,
+    }
+
+    setIsLoading(true)
+    try {
+      // Call the API with the selected items
+      const response = await fetch("/api/steam/loadout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`)
       }
 
+      const data = await response.json()
+
+      // Display the JSON data
+      setJsonResult(JSON.stringify(data, null, 2))
+
+      // Store the response items
+      setResponseItems(Array.isArray(data) ? data : [])
+
+      toast({
+        title: "Items submitted successfully",
+        description: `${items.length} items have been processed`,
+      })
+    } catch (error) {
+      console.error("Error submitting items:", error)
+      toast({
+        title: "Submission failed",
+        description: error instanceof Error ? error.message : "Failed to submit items",
+        variant: "destructive",
+      })
+
+      // For demo purposes, show the items that were submitted
+      setJsonResult(JSON.stringify(items, null, 2))
+      setResponseItems(items)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+
+  // Handle requesting more items
+  const handleRequestMoreItems = async () => {
+    if (isLoadingMore) return
+
+    setIsLoadingMore(true)
+    try {
+      // Combine selected items and existing response items for the API call
+      const combinedItems = [...items, ...responseItems]
+
       const requestData = {
-        items: item_data,
-        weapon_preferences: selectedWeaponTypes.includes("any") ? ["any"] : selectedWeaponTypes,
+        items: combinedItems,
+        weapon_preferences: selectedWeaponTypes.includes("any") ? undefined : selectedWeaponTypes,
       }
 
       const payload = {
         type: "items",
         data: requestData,
       }
-  
-      setIsLoading(true)
-      try {
-        // Call the API with the selected items
-        const response = await fetch("/api/steam/loadout", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        })
-  
-        if (!response.ok) {
-          throw new Error(`Error: ${response.status}`)
-        }
-  
-        const data = await response.json()
-  
-        // Display the JSON data
-        setJsonResult(JSON.stringify(data, null, 2))
-  
-        // Store the response items
-        setResponseItems(Array.isArray(data) ? data : [])
-  
-        toast({
-          title: "Items submitted successfully",
-          description: `${items.length} items have been processed`,
-        })
-      } catch (error) {
-        console.error("Error submitting items:", error)
-        toast({
-          title: "Submission failed",
-          description: error instanceof Error ? error.message : "Failed to submit items",
-          variant: "destructive",
-        })
-  
-        // For demo purposes, show the items that were submitted
-        setJsonResult(JSON.stringify(items, null, 2))
-        setResponseItems(items)
-      } finally {
-        setIsLoading(false)
+
+      // Call the API with the combined items
+      const response = await fetch("/api/steam/loadout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`)
       }
+
+      const data = await response.json()
+
+      // Update the JSON result
+      setJsonResult(JSON.stringify(data, null, 2))
+
+      // Add new items to existing response items (avoiding duplicates)
+      const newItems = Array.isArray(data) ? data : []
+      const existingIds = new Set(responseItems.map((item: any) => item.id))
+      const uniqueNewItems = newItems.filter((item) => !existingIds.has(item.id))
+
+      setResponseItems((prev: any) => [...prev, ...uniqueNewItems])
+
+      toast({
+        title: "More items requested",
+        description: `Added ${uniqueNewItems.length} new items`,
+      })
+    } catch (error) {
+      console.log("Error requesting more items:", error)
+      toast({
+        title: "Request failed",
+        description: error instanceof Error ? error.message : "Failed to request more items",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoadingMore(false)
     }
+  }
 
-    // Handle requesting more items
-    const handleRequestMoreItems = async () => {
-        if (isLoadingMore) return
 
-        setIsLoadingMore(true)
-        try {
-        // Combine selected items and existing response items for the API call
-        const combinedItems = [...items, ...responseItems]
+  // Enhanced clear all function that also clears response items
+  const handleClearAll = () => {
+    setResponseItems([])
+    setJsonResult(null)
+    onClearAll()
+    setSelectedWeaponTypes(["any"])
+  }
 
-        const requestData = {
-          items: combinedItems,
-          weapon_preferences: selectedWeaponTypes.includes("any") ? undefined : selectedWeaponTypes,
-        }
 
-        const payload = {
-          type: "items",
-          data: requestData,
-        }
+  // If no items are selected and no response items, render nothing
+  if (items.length === 0 && responseItems.length === 0) {
+    return null
+  }
 
-        // Call the API with the combined items
-        const response = await fetch("/api/steam/loadout", {
-            method: "POST",
-            headers: {
-            "Content-Type": "application/json",
-            },
-            body: JSON.stringify(payload),
-        })
 
-        if (!response.ok) {
-            throw new Error(`Error: ${response.status}`)
-        }
-
-        const data = await response.json()
-
-        // Update the JSON result
-        setJsonResult(JSON.stringify(data, null, 2))
-
-        // Add new items to existing response items (avoiding duplicates)
-        const newItems = Array.isArray(data) ? data : []
-        const existingIds = new Set(responseItems.map((item: any) => item.id))
-        const uniqueNewItems = newItems.filter((item) => !existingIds.has(item.id))
-
-        setResponseItems((prev: any) => [...prev, ...uniqueNewItems])
-
-        toast({
-            title: "More items requested",
-            description: `Added ${uniqueNewItems.length} new items`,
-        })
-        } catch (error) {
-        console.error("Error requesting more items:", error)
-        toast({
-            title: "Request failed",
-            description: error instanceof Error ? error.message : "Failed to request more items",
-            variant: "destructive",
-        })
-        } finally {
-        setIsLoadingMore(false)
-        }
-    }
-
-    // Enhanced clear all function that also clears response items
-    const handleClearAll = () => {
-      setResponseItems([])
-      setJsonResult(null)
-      onClearAll()
-      setSelectedWeaponTypes(["any"])
-    }
-  
-    if (items.length === 0 && responseItems.length === 0) {
-      return null
-    }
-
+  // Map rarity names to color classes
   const getRarityColorClass = (rarity: string): string => {
     switch (rarity) {
       case "Consumer Grade":
@@ -371,6 +384,8 @@ import Image from "next/image"
     }
   }
 
+
+  // Abbreviate wear names
   const getWearAbrev = (wear_name: string): string => {
     switch (wear_name) {
       case "Factory New":
@@ -387,6 +402,7 @@ import Image from "next/image"
         return ""
     }
   }
+
 
   return (
     <div className="mb-6 bg-gray-800 rounded-lg border border-gray-700 p-4">
@@ -439,12 +455,12 @@ import Image from "next/image"
         </div>
       </div>
 
-      <ScrollArea className="w-full whitespace-nowrap" orientation="horizontal">
-        <div className="flex space-x-4 pb-2">
+      <ScrollArea className="w-full overflow-auto" orientation="horizontal">
+        <div className="flex w-max space-x-4 pb-2">
           {items.map((item) => (
             <div
               key={item.id}
-              className="relative group flex-shrink-0 w-[120px] bg-gray-900 rounded-lg border border-gray-700 overflow-hidden"
+              className="relative group flex-shrink-0 w-[120px] bg-gray-900 rounded-lg border border-gray-700"
             >
               <button
                 className="absolute top-1 right-1 bg-gray-800 rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
@@ -779,4 +795,3 @@ import Image from "next/image"
     </div>
   )
 }
-

@@ -5,4 +5,3 @@ export function SteamIcon({ className }: { className?: string }) {
     </svg>
   )
 }
-

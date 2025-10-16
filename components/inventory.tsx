@@ -13,16 +13,16 @@ import { SteamIcon } from "@/components/steam-icon"
 import { SelectedItems } from "@/components/selected-items"
 import Link from "next/link"
 import { useToast } from "@/hooks/use-toast"
-import { StringDecoder } from "string_decoder"
 import { DollarSign, Euro, PoundSterling } from "lucide-react"
 
+
+// Supported currencies
 const currencies = [
   { code: "USD", char: "$", rate: 1, icon: <DollarSign className="mr-2 h-4 w-4 text-green-500" /> },
   { code: "EUR", char: "€", rate: 0.86, icon: <Euro className="mr-2 h-4 w-4 text-blue-500" /> },
   { code: "GBP", char: "£", rate: 0.75, icon: <PoundSterling className="mr-2 h-4 w-4 text-purple-500" /> },
 ];
 
-let initializedCurrency = false;
 
 export function Inventory({ steamId }: { steamId: string | null }) {
   const [loginType, setLoginType] = useState<string>("")
@@ -93,6 +93,8 @@ export function Inventory({ steamId }: { steamId: string | null }) {
   const currentPriceBaseRef = useRef("USD");
   const { toast } = useToast()
 
+
+  // Function to handle logout and redirect to homepage
   const handleLogout = () => {
     localStorage.removeItem("login_type")
     localStorage.removeItem("inventory_data")
@@ -105,6 +107,8 @@ export function Inventory({ steamId }: { steamId: string | null }) {
       })
   }
 
+
+  // Update steam prices based on currency change
   function updateSteamPrices(multiplier: number) {
     setItems((prevItems) =>
       prevItems.map((item) => ({
@@ -114,12 +118,15 @@ export function Inventory({ steamId }: { steamId: string | null }) {
     );
   }
 
+
+  // Get conversion rate by currency code
   function getRateByCurrency(code: string) {
     const currency = currencies.find(c => c.code === code);
     return currency ? currency.rate : 1; // fallback to 1 if not found
   }
 
 
+  // Handle currency change effects
   useEffect(() => {
     const newCurrencyCode = selectedCurrency;
     const oldCurrencyCode = currentPriceBaseRef.current;
@@ -142,12 +149,22 @@ export function Inventory({ steamId }: { steamId: string | null }) {
   }, [selectedCurrency]);
 
 
+  // On mount, load selected currency from localStorage
   useEffect(() => {
     const storedCurrency = localStorage.getItem("selected_currency");
     if (storedCurrency) {
       setSelectedCurrency(storedCurrency); 
     }
   }, []);
+
+
+  // Update filtered value when selected items change
+  useEffect(() => {
+    console.log("Item selected")
+    const value = selectedItems.reduce((sum, item) => sum + (item.steam_price || 0) * (item.quantity || 1), 0)
+    setFilteredValue(value)
+    console.log("Selected items value:", value)
+  }, [selectedItems]);
 
 
   // Fetch inventory data
@@ -191,11 +208,6 @@ export function Inventory({ steamId }: { steamId: string | null }) {
           throw new Error(`API error: Error inventory data`)
         }
 
-        // if (!data.success) {
-        //   setTimeout(() => {
-        //     handleLogout();
-        //   }, 12000);
-        // }
       } catch (error) {
         console.log("Error loading inventory:", error)
       } finally {
@@ -205,6 +217,7 @@ export function Inventory({ steamId }: { steamId: string | null }) {
 
     loadInventory()
   }, [steamId])
+
 
   // Handle scroll events to detect when user has scrolled
   useEffect(() => {
@@ -244,32 +257,24 @@ export function Inventory({ steamId }: { steamId: string | null }) {
     }
   }, [])
 
+
   // Handle total value change from filtered items
   const handleTotalValueChange = (value: number) => {
     setFilteredValue(value)
   }
+
 
   // Handle showing more items
   const handleShowMore = () => {
     setVisibleItems((prev) => prev + 24) // Add 4 more rows (6 items per row)
   }
 
-  // Handle filter changes
-  const handleFilterChange = (newFilters: FilterState) => {
-    // Only update if filters actually changed
-    const filtersChanged = JSON.stringify(filters) !== JSON.stringify(newFilters)
-
-    if (filtersChanged) {
-      setFilters(newFilters)
-      // Reset visible items when filters change
-      setVisibleItems(24)
-    }
-  }
 
   // Handle filtered items update
   const handleFilteredItemsChange = (items: InventoryItem[]) => {
     setFilteredItems(items)
   }
+
 
   // Handle item selection
   const handleSelectItem = (item: InventoryItem) => {
@@ -287,15 +292,18 @@ export function Inventory({ steamId }: { steamId: string | null }) {
     })
   }
 
+
   // Handle removing a selected item
   const handleRemoveSelectedItem = (id: string) => {
     setSelectedItems((prev) => prev.filter((item) => item.id !== id))
   }
 
+
   // Handle clearing all selected items
   const handleClearSelectedItems = () => {
     setSelectedItems([])
   }
+
 
   return (
     <>
@@ -357,7 +365,7 @@ export function Inventory({ steamId }: { steamId: string | null }) {
               filteredValue={filteredValue}
               currencies={currencies}
               selectedCurrency={selectedCurrency}
-              hideId={true} // Hide the Steam ID box
+              hideId={true}
             />
           </div>
 
