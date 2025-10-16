@@ -112,13 +112,13 @@ export function SelectedItems({ items, onRemoveItem, onClearAll }: SelectedItems
       setResponseItems(Array.isArray(data) ? data : [])
 
       toast({
-        title: "Craft suggestions received",
+        title: "Craft suggestions submitted",
         description: `${data.length} crafts have been recommended.`,
       })
     } catch (error) {
       console.log("Error submitting crafts:", error)
       toast({
-        title: "Craft suggestion failed",
+        title: "Request failed",
         description: error instanceof Error ? error.message : "Failed to recommend crafts",
         variant: "destructive",
       })
@@ -185,14 +185,14 @@ export function SelectedItems({ items, onRemoveItem, onClearAll }: SelectedItems
       setResponseItems((prev: any) => [...prev, ...uniqueNewItems])
 
       toast({
-          title: "More items requested",
-          description: `Added ${uniqueNewItems.length} new items`,
+          title: "More crafts requested",
+          description: `Suggested ${uniqueNewItems.length} new crafts`,
       })
     } catch (error) {
       console.log("Error requesting more items:", error)
       toast({
         title: "Request failed",
-        description: error instanceof Error ? error.message : "Failed to request more items",
+        description: error instanceof Error ? error.message : "Failed to request more crafts",
         variant: "destructive",
       })
     } finally {
@@ -250,14 +250,14 @@ export function SelectedItems({ items, onRemoveItem, onClearAll }: SelectedItems
       setResponseItems(Array.isArray(data) ? data : [])
 
       toast({
-        title: "Loadout suggestions received",
+        title: "Loadout suggestions submitted",
         description: `${data.length} items have been recommended.`,
       })
     } catch (error) {
       console.error("Error submitting items:", error)
       toast({
-        title: "Loadout suggestions failed",
-        description: error instanceof Error ? error.message : "Failed to recommend items",
+        title: "Request failed",
+        description: error instanceof Error ? error.message : "Failed to recommend items for your loadout",
         variant: "destructive",
       })
 
@@ -316,13 +316,13 @@ export function SelectedItems({ items, onRemoveItem, onClearAll }: SelectedItems
 
       toast({
         title: "More items requested",
-        description: `Added ${uniqueNewItems.length} new items`,
+        description: `Suggested ${uniqueNewItems.length} new items`,
       })
     } catch (error) {
       console.log("Error requesting more items:", error)
       toast({
         title: "Request failed",
-        description: error instanceof Error ? error.message : "Failed to request more items",
+        description: error instanceof Error ? error.message : "Failed to recommend more items for you loadout",
         variant: "destructive",
       })
     } finally {
