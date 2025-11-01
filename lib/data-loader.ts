@@ -196,7 +196,7 @@ async function loadDataFromURL<T>(url: string): Promise<T> {
 
 export async function getItemDataURL(): Promise<ItemData> {
   if (!itemDataCache) {
-    itemDataCache = await loadDataFromURL<ItemData>("https://bymykel.github.io/CSGO-API/api/en/all.json");
+    itemDataCache = await loadDataFromURL<ItemData>("https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/all.json");
   }
   return itemDataCache;
 }
@@ -210,7 +210,7 @@ export async function getPriceDataURL(): Promise<PriceData> {
 
 export async function getSkinDataURL(): Promise<SkinData> {
   if (!skinDataCache) {
-    skinDataCache = await loadDataFromURL<SkinData>("https://bymykel.github.io/CSGO-API/api/en/skins.json");
+    skinDataCache = await loadDataFromURL<SkinData>("https://raw.githubusercontent.com/ByMykel/CSGO-API/main/public/api/en/skins.json");
   }
   return skinDataCache;
 }
@@ -253,7 +253,7 @@ export function getFullSkinData() {
 export async function fetchData() {
   try {
       await fetchURLData();
-      console.log("Fetched main data successfully.");
+      console.log("Fetched main data json successfully.");
   } catch (error) {
       console.error("Error fetching main data, attempting backup...", error);
       try {
