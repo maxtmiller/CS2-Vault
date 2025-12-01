@@ -73,6 +73,7 @@ async function generateInspectLinkFromObject(props: InspectItem): Promise<string
         const root = await protobuf.load(filePath);
         const CEconItemPreviewDataBlock = root.lookupType('CEconItemPreviewDataBlock');
   
+        // console.log(props);
         const errMsg = CEconItemPreviewDataBlock.verify(econ);
         if (errMsg) throw new Error(errMsg);
   
@@ -173,7 +174,7 @@ async function processItemData(desc: any, key: string, steamId: string): Promise
             wear_name = desc.descriptions[0].value.split("Exterior: ")[1]
         }
 
-        if (desc.descriptions && desc.descriptions[2].name && desc.descriptions[2].name === "nametag") {
+        if (desc.descriptions?.[2]?.name === "nametag") {
             custom_name = desc.descriptions[2].value.split("Name Tag:")[1]
         }
 
@@ -211,7 +212,7 @@ async function processItemData(desc: any, key: string, steamId: string): Promise
             rarity_name = "Distinguished"
         }
 
-        if (desc.type.includes("Sniper Rifle") || desc.type.includes("SMG") || desc.type.includes("Rifle") || desc.type.includes("Shotgun") || desc.type.includes("Pistol") || desc.type.includes("Gloves") || desc.type.includes("Knife")) {
+        if (desc.type.includes("Sniper Rifle") || desc.type.includes("SMG") || desc.type.includes("Rifle") || desc.type.includes("Shotgun") || desc.type.includes("Pistol") || (desc.type.includes("Equipment") && desc.name.includes("Zeus")) || desc.type.includes("Gloves") || desc.type.includes("Knife")) {
             if (desc.type === "SMG") {
                 type = "SMGs"
             } else if (desc.type.includes("Rifle") || desc.type.includes("Sniper Rifle")) {
@@ -224,6 +225,13 @@ async function processItemData(desc: any, key: string, steamId: string): Promise
                 type = "★ Gloves"
             } else if (desc.type.includes("Knife")) {
                 type = "★ Knives"
+                if (desc.tags?.[5]?.localized_tag_name === "Not Painted") {
+                    paint_index = 0;
+                    paint_wear = 0.75;
+                    wear_name = "Not painted";
+                }
+            } else if (desc.type.includes("Equipment") && desc.name.includes("Zeus")) {
+                type = "Equipment";
             }
             category = "weapon"
         } else if (desc.type.includes("Container")) {
@@ -258,7 +266,8 @@ async function processItemData(desc: any, key: string, steamId: string): Promise
         const item = Object.values(full_skin_data).find(
             (item) => (item as any).name === name
         );
-        paint_index = Number.parseInt((item as any).paint_index)
+        console.log(item);
+        paint_index = item?.paint_index ? Number.parseInt((item as any).paint_index) : 0;
         def_index = Number.parseInt((item as any).weapon.weapon_id)
         rarity = getRarityNum(rarity_name);
     } else if (category === "container") {
@@ -305,11 +314,15 @@ async function processItemData(desc: any, key: string, steamId: string): Promise
             encodedString = encodeURIComponent(`StatTrak™ ${name} (${wear_name})`)
                 .replace(/\(/g, "%28")
                 .replace(/\)/g, "%29");
-        } else {
-            encodedString = encodeURIComponent(`${name} (${wear_name})`)
+        } else if (paint_index == 0) {
+            encodedString = encodeURIComponent(`${name}`)
                 .replace(/\(/g, "%28")
                 .replace(/\)/g, "%29");
-        }
+        } else {
+            encodedString = encodeURIComponent(`StatTrak™ ${name} (${wear_name})`)
+                .replace(/\(/g, "%28")
+                .replace(/\)/g, "%29");
+        } 
         SteamMarket = `https://steamcommunity.com/market/listings/730/${encodedString}`
     } else {
         const encodedString = encodeURIComponent(`${name}`)
@@ -331,12 +344,15 @@ async function processItemData(desc: any, key: string, steamId: string): Promise
             title = `StatTrak™ ${name} (${wear_name})`;
         } else if (is_souvenir) {
             title = `Souvenir ${name} (${wear_name})`;
+        } else if (paint_index == 0) {
+            title = `${name}`;
         } else {
             title = `${name} (${wear_name})`;
         }
-        price = full_price_data[title];
+        console.log(title);
+        price = title in full_price_data ? full_price_data[title] : 0;
     } else {
-        price = full_price_data[name];
+        price = name in full_price_data ? full_price_data[name] : 0;
     }
 
     const weapon_data = {

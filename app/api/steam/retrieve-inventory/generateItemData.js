@@ -5,7 +5,6 @@ import CRC32 from 'crc-32';
 import protobuf from 'protobufjs';
 import path from 'path';
 import { fetchData, getFullItemData, getFullPriceData, getFullSkinData } from "@/lib/data-loader"
-import { Console } from 'console';
 
 
 function findFloatRange(float) {

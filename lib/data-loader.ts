@@ -224,7 +224,8 @@ let full_skin_data: SkinData;
 async function fetchURLData() {
   [full_item_data, full_price_data, full_skin_data] = await Promise.all([
       getItemDataURL(),
-      getPriceDataURL(),
+      // getPriceDataURL(),
+      getPriceDataBackup(),
       getSkinDataURL(),
   ]);
 }  
@@ -252,16 +253,16 @@ export function getFullSkinData() {
 
 export async function fetchData() {
   try {
-      await fetchURLData();
-      console.log("Fetched main data json successfully.");
+    await fetchURLData();
+    console.log("Fetched main data json successfully.");
   } catch (error) {
       console.error("Error fetching main data, attempting backup...", error);
       try {
-          await fetchBackupData();
-          console.log("Fetched backup data successfully.");
+        await fetchBackupData();
+        console.log("Fetched backup data successfully.");
       } catch (backupError) {
-          console.error("Error fetching backup data as well.", backupError);
-          return [];
+        console.error("Error fetching backup data as well.", backupError);
+        return [];
       }
   }
 }
