@@ -73,7 +73,6 @@ async function generateInspectLinkFromObject(props: InspectItem): Promise<string
         const root = await protobuf.load(filePath);
         const CEconItemPreviewDataBlock = root.lookupType('CEconItemPreviewDataBlock');
   
-        // console.log(props);
         const errMsg = CEconItemPreviewDataBlock.verify(econ);
         if (errMsg) throw new Error(errMsg);
   
@@ -266,7 +265,6 @@ async function processItemData(desc: any, key: string, steamId: string): Promise
         const item = Object.values(full_skin_data).find(
             (item) => (item as any).name === name
         );
-        console.log(item);
         paint_index = item?.paint_index ? Number.parseInt((item as any).paint_index) : 0;
         def_index = Number.parseInt((item as any).weapon.weapon_id)
         rarity = getRarityNum(rarity_name);
@@ -349,7 +347,6 @@ async function processItemData(desc: any, key: string, steamId: string): Promise
         } else {
             title = `${name} (${wear_name})`;
         }
-        console.log(title);
         price = title in full_price_data ? full_price_data[title] : 0;
     } else {
         price = name in full_price_data ? full_price_data[name] : 0;
