@@ -565,13 +565,5 @@ export async function processInventoryData(data: any, steamId: string): Promise<
     
     const processed_data = await appendInfo(JSON.stringify(raw_data), steamId);
 
-    function writePrettyJsonFile(jsonString: any, filePath: string) {
-        const obj = JSON.parse(jsonString);
-        const pretty = JSON.stringify(obj, null, 2);
-
-        fs.writeFileSync(filePath, pretty, "utf-8");
-    }
-    writePrettyJsonFile(processed_data, "./output.json");
-
     return { success: true, item_data: processed_data, steamID: steamId, storage_units: [] };
 }
