@@ -108,22 +108,6 @@ function appendStickers(data: any) {
 
     // Find the sticker_info entry
     const stickerInfoEntry = data.descriptions.find((d: any) => d.name === "sticker_info");
-
-
-    // let stickerNames = [];
-    // if (stickerInfoEntry) {
-    // // The names are after "Sticker: " and separated by commas in the HTML content
-    // const value = stickerInfoEntry.value;
-
-    // // Extract the last line inside the <center>...</center>
-    // const match = value.match(/<center>.*?Sticker:\s*(.*?)<\/center>/s);
-    //     if (match && match[1]) {
-    //         // Split by commas and trim spaces
-    //         stickerNames = match[1].split(',').map((s: any) => s.trim());
-    //     }
-    // }
-
-    // console.log(stickerNames)
     
     let stickerNames = [];
     if (stickerInfoEntry) {
@@ -135,22 +119,20 @@ function appendStickers(data: any) {
 
     if (start !== -1 && end !== -1 && end > start) {
         const stickerListStr = value.slice(start + '>Sticker:'.length, end).trim();
-        // Split by commas and trim each name
-        stickerNames = stickerListStr.split(',').map(s => s.trim());
+        stickerNames = stickerListStr.split(',').map((s: any) => s.trim());
     }
     }
-
-    console.log(stickerNames);
 
     let stickers: any[] = [];
-    stickerNames.forEach((sticker: string, index: number) => {
+    for (let index = 0; index < stickerNames.length; index++) {
+        const sticker = stickerNames[index];
         const sticker_name = "Sticker | " + sticker;
 
         const item = Object.values(full_item_data).find(
             (item: any) => item.market_hash_name === sticker_name
         );
 
-        if (!item) return; // skip if not found
+        if (!item) continue;
 
         const sticker_data = {
             name: sticker_name,
@@ -161,12 +143,11 @@ function appendStickers(data: any) {
             scale: null,
             image: (item as any).image,
             steam_price: full_price_data[sticker_name]?.steam?.last_ever ?? null,
-            sticker_id: (item as any)?.id.split("sticker-")[1]
+            sticker_id: Number.parseInt((item as any).id.split("sticker-")[1], 10),
         };
 
         stickers.push(sticker_data);
-    });
-
+    }
 
     return { ...data, stickers };
 }
