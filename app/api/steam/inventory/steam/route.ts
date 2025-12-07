@@ -35,23 +35,6 @@ export async function GET(request: NextRequest) {
     const data = await response.json()
     const result = await processInventoryData(data, steamId);
 
-    const cookieStore = await cookies()
-    cookieStore.set(
-      "steam_session",
-      JSON.stringify({
-        steamId: steamId,
-        authenticated: true,
-        expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
-      }),
-      {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 24 * 60 * 60, // 24 hours
-        path: "/",
-      },
-    )
-
     // Return the data to the client
     return NextResponse.json({ result })
   } catch (error) {

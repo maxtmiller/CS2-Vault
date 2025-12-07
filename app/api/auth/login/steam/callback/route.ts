@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { cookies } from "next/headers"
+import { createSteamSession } from "@/lib/session"
 
 export async function GET(request: NextRequest) {
   try {
@@ -60,22 +60,7 @@ export async function GET(request: NextRequest) {
     const steamId = steamIdMatch[1]
 
     // Step 3: Create a session cookie
-    const cookieStore = await cookies()
-    cookieStore.set(
-      "steam_session",
-      JSON.stringify({
-        steamId,
-        authenticated: true,
-        expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
-      }),
-      {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 24 * 60 * 60, // 24 hours
-        path: "/",
-      },
-    )
+    await createSteamSession(steamId);
 
     // Step 4: Redirect to the inventory page
     // We don't fetch inventory data here - we'll let the client fetch it

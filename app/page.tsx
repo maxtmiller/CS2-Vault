@@ -54,4 +54,3 @@ export default async function Home() {
 
   return <Inventory steamId={steamId} />
 }
-

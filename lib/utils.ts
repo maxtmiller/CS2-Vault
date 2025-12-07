@@ -24,7 +24,7 @@ export async function fetchAllInventoryData(authData: string, loginType: number)
   console.log("Fetching private inventory data from steam client...");
 
   try {
-    const response = await fetch("/api/steam/retrieve-inventory", {
+    const response = await fetch("/api/steam/inventory/jwt", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -59,7 +59,7 @@ export async function fetchVisibleInventoryData(steamId: string): Promise<any | 
   console.log("Fetching public inventory data...");
 
   try {
-    const response = await fetch(`/api/steam/inventory?steamid=${steamId}`, {
+    const response = await fetch(`/api/steam/inventory/steam?steamid=${steamId}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

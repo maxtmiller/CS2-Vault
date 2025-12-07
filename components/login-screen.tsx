@@ -1,65 +1,81 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useRef } from "react"
-import { Button } from "@/components/ui/button"
-import { SteamIcon } from "@/components/steam-icon"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { QrCode, KeyRound, Loader2, SquareArrowOutUpRight, RefreshCw } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
+import { useState, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { SteamIcon } from "@/components/ui/steam-icon";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  QrCode,
+  KeyRound,
+  Loader2,
+  SquareArrowOutUpRight,
+  RefreshCw,
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { createSteamSession } from "@/lib/session";
 
 export function LoginScreen() {
-  const [jwtToken, setJwtToken] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [isPolling, setIsPolling] = useState(false)
-  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null)
-  const [qrRefreshNeeded, setQrRefreshNeeded] = useState(false)
-  const [pollingError, setPollingError] = useState<string | null>(null)
-  const qrCanvasRef = useRef<HTMLCanvasElement>(null)
-  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null)
-  const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const pollingCountRef = useRef<number>(0)
-  const { toast } = useToast()
+  const [jwtToken, setJwtToken] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isPolling, setIsPolling] = useState(false);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
+  const [qrRefreshNeeded, setQrRefreshNeeded] = useState(false);
+  const [pollingError, setPollingError] = useState<string | null>(null);
+  const qrCanvasRef = useRef<HTMLCanvasElement>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingCountRef = useRef<number>(0);
+  const { toast } = useToast();
 
   useEffect(() => {
-    return () => {
-      stopPolling()
-    }
-  }, [])
+    localStorage.removeItem("inventory_data");
+    localStorage.removeItem("login_type");
+    localStorage.removeItem("selected_currency");
+    // return () => {
+    //   stopPolling()
+    // }
+  }, []);
 
   const stopPolling = () => {
     if (pollingIntervalRef.current) {
-      clearInterval(pollingIntervalRef.current)
-      pollingIntervalRef.current = null
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
     }
     if (pollingTimeoutRef.current) {
-      clearTimeout(pollingTimeoutRef.current)
-      pollingTimeoutRef.current = null
+      clearTimeout(pollingTimeoutRef.current);
+      pollingTimeoutRef.current = null;
     }
-    setIsPolling(false)
-    pollingCountRef.current = 0
-  }
+    setIsPolling(false);
+    pollingCountRef.current = 0;
+  };
 
   const handleSteamOAuth = async () => {
-
     localStorage.setItem(
       "login_type",
       JSON.stringify({
         timestamp: Date.now(),
-        expiresAt: Date.now() + 1000 * 5,
+        expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
         type: "steam",
         loginType: 3,
         authData: "",
-      }),
-    )
-    window.location.href = "/api/auth/steam"
-  }
+      })
+    );
+
+    window.location.href = `/api/auth/login/steam`;
+  };
 
   const handleQrLogin = async (data: any) => {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-      stopPolling()
+      stopPolling();
 
       const authData = {
         responseStatus: data.responseStatus,
@@ -67,7 +83,7 @@ export function LoginScreen() {
         refreshToken: data.session.refreshToken,
         accessToken: data.session.accessToken,
         // accessTokenSetAt: data.session.accessTokenSetAt,
-      }
+      };
 
       const EXPIRATION_TIME = 1000 * 60 * 60 * 7;
 
@@ -79,33 +95,32 @@ export function LoginScreen() {
           type: "qr",
           loginType: 1,
           authData: JSON.stringify(authData) || "",
-        }),
-      )
+        })
+      );
 
-      window.location.href = `/api/auth/create-session?steamid=${data.session.steamID}`
-
+      window.location.href = `/api/auth/create-session?steamid=${data.session.steamID}`;
     } catch (error) {
-      console.error("QR login error:", error)
+      console.error("QR login error:", error);
       toast({
         title: "Login failed",
         description: error instanceof Error ? error.message : "Unknown error",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
-      setIsPolling(false)
+      setIsLoading(false);
+      setIsPolling(false);
     }
-  }
+  };
 
   const checkLoginStatus = async () => {
     try {
-      pollingCountRef.current += 1
+      pollingCountRef.current += 1;
 
       if (pollingCountRef.current > 60) {
-        stopPolling()
-        setQrRefreshNeeded(true)
-        setPollingError("Polling timeout. Please refresh the QR code.")
-        return
+        stopPolling();
+        setQrRefreshNeeded(true);
+        setPollingError("Polling timeout. Please refresh the QR code.");
+        return;
       }
 
       const response = await fetch("/api/auth/login-status", {
@@ -115,127 +130,134 @@ export function LoginScreen() {
           // Add a timestamp to prevent caching
           "X-Timestamp": Date.now().toString(),
         },
-      })
+      });
 
       if (!response.ok) {
-        throw new Error(`Status check failed: ${response.status}`)
+        throw new Error(`Status check failed: ${response.status}`);
       }
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (data.loggedIn) {
-        console.log("User authenticated via QR code")
-        await handleQrLogin(data)
+        console.log("User authenticated via QR code");
+        await handleQrLogin(data);
       } else if (data.reason === "expired") {
-        stopPolling()
-        setQrRefreshNeeded(true)
-        setPollingError("Session expired. Please refresh the QR code.")
+        stopPolling();
+        setQrRefreshNeeded(true);
+        setPollingError("Session expired. Please refresh the QR code.");
       } else if (pollingCountRef.current > 40) {
-        setQrRefreshNeeded(true)
+        setQrRefreshNeeded(true);
       }
     } catch (error) {
-      console.error("Error checking login status:", error)
-      setPollingError("Error checking login status. Please try again.")
-      stopPolling()
+      console.error("Error checking login status:", error);
+      setPollingError("Error checking login status. Please try again.");
+      stopPolling();
     }
-  }
+  };
 
   const handleQrPolling = async (refresh = false) => {
-    setIsLoading(true)
-    setQrRefreshNeeded(false)
+    setIsLoading(true);
+    setQrRefreshNeeded(false);
 
     try {
       if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current)
-        pollingIntervalRef.current = null
+        clearInterval(pollingIntervalRef.current);
+        pollingIntervalRef.current = null;
       }
 
-      const response = await fetch(`/api/auth/qr${refresh ? "?refresh=true" : ""}`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
+      const response = await fetch(
+        `/api/auth/qr${refresh ? "?refresh=true" : ""}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (!response.ok) {
-        throw new Error(`QR code generation failed: ${response.status}`)
+        throw new Error(`QR code generation failed: ${response.status}`);
       }
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (data.qrCodeDataUrl) {
-        setQrCodeDataUrl(data.qrCodeDataUrl)
-        setIsPolling(true)
+        setQrCodeDataUrl(data.qrCodeDataUrl);
+        setIsPolling(true);
 
-        pollingIntervalRef.current = setInterval(checkLoginStatus, 3000)
+        pollingIntervalRef.current = setInterval(checkLoginStatus, 3000);
 
         setTimeout(() => {
-          setQrRefreshNeeded(true)
-        }, 120000)
+          setQrRefreshNeeded(true);
+        }, 120000);
       } else {
-        throw new Error("No QR code data received")
+        throw new Error("No QR code data received");
       }
     } catch (error) {
-      console.error("Error during QR login:", error)
+      console.error("Error during QR login:", error);
       toast({
         title: "QR Code Generation Failed",
         description: error instanceof Error ? error.message : "Unknown error",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const handleJwtLogin = async () => {
-    if (!jwtToken.trim()) return
+    if (!jwtToken.trim()) return;
 
-    setIsLoading(true)
+    setIsLoading(true);
     try {
-
-      let parsedJWT
+      let parsedJWT;
       try {
-        parsedJWT = JSON.parse(jwtToken)
+        parsedJWT = JSON.parse(jwtToken);
       } catch (error) {
         toast({
           title: "Invalid Token",
           variant: "destructive",
-        })
-        throw new Error("Invalid JWT token")
+        });
+        throw new Error("Invalid JWT token");
       }
 
-      if (!parsedJWT.logged_in || !parsedJWT.steamid || !parsedJWT.accountid || !parsedJWT.account_name || !parsedJWT.token) {
+      if (
+        !parsedJWT.logged_in ||
+        !parsedJWT.steamid ||
+        !parsedJWT.accountid ||
+        !parsedJWT.account_name ||
+        !parsedJWT.token
+      ) {
         toast({
           title: "Invalid Token",
           variant: "destructive",
-        })
-        throw new Error("Invalid JWT token")
+        });
+        throw new Error("Invalid JWT token");
       }
 
       localStorage.setItem(
         "login_type",
         JSON.stringify({
           timestamp: Date.now(),
-          expiresAt: Date.now() + 1000 * 5,
+          expiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24 hours
           type: "jwt",
           loginType: 2,
           authData: jwtToken || "",
-        }),
-      )
+        })
+      );
 
-      window.location.href = `/api/auth/create-session?steamid=${parsedJWT.steamid}`
-
+      window.location.href = `/api/auth/login/jwt?steamid=${parsedJWT.steamid}`;
     } catch (error) {
-      console.error("JWT login error:", error)
+      console.error("JWT login error:", error);
       toast({
         title: "Login failed",
         description: error instanceof Error ? error.message : "Unknown error",
         variant: "destructive",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 p-4 text-white">
@@ -244,24 +266,34 @@ export function LoginScreen() {
           <img src="/logo.png" width="125" height="125" alt="Logo" />
         </div>
         <h1 className="mb-2 text-4xl font-bold">CS2 Vault</h1>
-        <p className="text-gray-300">Your CS2 Inventory, Simplified and Enhanced.</p>
+        <p className="text-gray-300">
+          Your CS2 Inventory, Simplified and Enhanced.
+        </p>
       </div>
 
       <Card className="w-full max-w-md bg-gray-800 border-gray-700">
         <CardHeader>
           <CardTitle className="text-white">Sign In</CardTitle>
-          <CardDescription className="text-gray-400">Choose your preferred login method</CardDescription>
+          <CardDescription className="text-gray-400">
+            Choose your preferred login method
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="steam" className="w-full">
             <TabsList className="grid w-full grid-cols-2 bg-gray-700">
-              <TabsTrigger value="steam" className="data-[state=active]:bg-gray-900">
+              <TabsTrigger
+                value="steam"
+                className="data-[state=active]:bg-gray-900"
+              >
                 Steam
               </TabsTrigger>
               {/* <TabsTrigger value="qr" className="data-[state=active]:bg-gray-900">
                 QR Code
               </TabsTrigger> */}
-              <TabsTrigger value="jwt" className="data-[state=active]:bg-gray-900">
+              <TabsTrigger
+                value="jwt"
+                className="data-[state=active]:bg-gray-900"
+              >
                 JWT Token
               </TabsTrigger>
             </TabsList>
@@ -273,12 +305,17 @@ export function LoginScreen() {
                   className="flex items-center text-white-100 gap-2 bg-[#0b327a] hover:bg-[#2a475e] w-full"
                   disabled={isLoading}
                 >
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <SteamIcon className="h-5 w-5" />}
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <SteamIcon className="h-5 w-5" />
+                  )}
                   Sign in with Steam
                 </Button>
               </div>
               <p className="mt-4 text-center text-sm text-gray-400">
-                This will only accesses your public inventory, including tradable items.
+                This will only accesses your public inventory, including
+                tradable items.
               </p>
             </TabsContent>
 
@@ -298,7 +335,11 @@ export function LoginScreen() {
 
                 <div className="flex flex-col w-full gap-2">
                   {!qrCodeDataUrl ? (
-                    <Button onClick={() => handleQrPolling(false)} className="w-full" disabled={isLoading}>
+                    <Button
+                      onClick={() => handleQrPolling(false)}
+                      className="w-full"
+                      disabled={isLoading}
+                    >
                       {isLoading ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -317,7 +358,11 @@ export function LoginScreen() {
                         </div>
                       )}
 
-                      {pollingError && <div className="text-center text-sm text-red-400 mb-2">{pollingError}</div>}
+                      {pollingError && (
+                        <div className="text-center text-sm text-red-400 mb-2">
+                          {pollingError}
+                        </div>
+                      )}
 
                       {(qrRefreshNeeded || pollingError) && (
                         <div className="text-center text-sm text-amber-400 mb-2">
@@ -351,24 +396,35 @@ export function LoginScreen() {
             <TabsContent value="jwt" className="mt-4">
               <div className="flex flex-col gap-4">
                 <div className="space-y-2">
-                  <p className="text-sm text-gray-400">Paste your Steam JWT token below</p>
+                  <p className="text-sm text-gray-400">
+                    Paste your Steam JWT token below
+                  </p>
                   <div className="flex items-center gap-1">
-                      <Input
+                    <Input
                       type="password"
                       placeholder="JWT Token"
                       value={jwtToken}
                       onChange={(e) => setJwtToken(e.target.value)}
                       className="bg-gray-700 border-gray-600 flex-1"
-                      />
-                      <Button
+                    />
+                    <Button
                       className="bg-[#0a4894] hover:bg-[#2a475e] text-white h-10 w-10 flex items-center justify-center"
-                      onClick={() => window.open("https://steamcommunity.com/chat/clientjstoken", "_blank")}
-                      >
-                          <SquareArrowOutUpRight className="h-8 w-8" />
-                      </Button>
+                      onClick={() =>
+                        window.open(
+                          "https://steamcommunity.com/chat/clientjstoken",
+                          "_blank"
+                        )
+                      }
+                    >
+                      <SquareArrowOutUpRight className="h-8 w-8" />
+                    </Button>
                   </div>
                 </div>
-                <Button onClick={handleJwtLogin} className="w-full" disabled={isLoading || !jwtToken.trim()}>
+                <Button
+                  onClick={handleJwtLogin}
+                  className="w-full"
+                  disabled={isLoading || !jwtToken.trim()}
+                >
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -382,7 +438,8 @@ export function LoginScreen() {
                   )}
                 </Button>
                 <p className="mt-4 text-center text-sm text-gray-400">
-                  This will access your full inventory, including non-tradable items and storage units.
+                  This will access your full inventory, including non-tradable
+                  items and storage units.
                 </p>
               </div>
             </TabsContent>
@@ -390,5 +447,5 @@ export function LoginScreen() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

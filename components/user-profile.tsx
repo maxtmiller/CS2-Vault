@@ -7,18 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ChevronDown } from "lucide-react"
-
-
-interface ProfileData {
-  steamID64: string
-  steamName: string
-  avatarMedium: string
-  avatarIcon: string
-  avatarFull: string
-  onlineState?: string
-  memberSince?: string
-  location?: string
-}
+import { ProfileData } from "@/types/profile"
 
 
 export function UserProfile({ steamId, currencies, selectedCurrency, setSelectedCurrency }: { 

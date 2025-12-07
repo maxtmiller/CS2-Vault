@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
 
     // Redirect to Steam's OpenID login page
     const steamLoginUrl = "https://steamcommunity.com/openid/login"
-    const returnUrl = new URL("/api/auth/steam/callback", request.url).toString()
+    const returnUrl = new URL("/api/auth/login/steam/callback", request.url).toString()
 
     const params = new URLSearchParams({
       "openid.ns": "http://specs.openid.net/auth/2.0",
