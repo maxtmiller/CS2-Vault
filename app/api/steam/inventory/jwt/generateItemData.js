@@ -404,6 +404,7 @@ async function appendInfo(mergedData) {
             }
         }
 
+        console.log("Item info appended")
         return JSON.stringify(items, null, 2);
     } catch (error) {
         console.error('Error processing items: ', error);
@@ -503,6 +504,8 @@ export async function initializeCSGOInventory(authData, loginType) {
                 // Cleanup listeners
                 client.removeAllListeners();
                 csgo.removeAllListeners();
+
+                console.log("Listeners cleaned")
 
                 resolve({ success: true, item_data: mergedData, steamID, storage_units });
 
