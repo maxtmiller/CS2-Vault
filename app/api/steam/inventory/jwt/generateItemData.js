@@ -356,8 +356,6 @@ async function getItemInfoByDefIndex(old_data) {
         is_tradable: old_data.is_tradable,
     }
 
-    console.log(item_data)
-
     return item ? item_data : null;
 }
 

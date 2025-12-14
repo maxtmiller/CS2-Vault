@@ -244,7 +244,6 @@ export function InventoryGrid({
 
     // Call callbacks with the latest data
     if (onTotalValueChange && selectedItemIds.length === 0) {
-      console.log("filtered value changed");
       onTotalValueChange(totalValue);
     }
 
@@ -490,7 +489,7 @@ export function InventoryGrid({
 
       const items = data.item_data;
 
-      console.log("Inventory.tsx: Fetched inventory data:", data);
+      // console.log("Inventory.tsx: Fetched inventory data:", data);
 
       if (!data.success) {
         setTimeout(() => {

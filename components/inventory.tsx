@@ -172,13 +172,13 @@ export function Inventory({ steamId }: { steamId: string | null }) {
 
   // Update filtered value when selected items change
   useEffect(() => {
-    console.log("Item selected");
+    // console.log("Item selected");
     const value = selectedItems.reduce(
       (sum, item) => sum + (item.steam_price || 0) * (item.quantity || 1),
       0
     );
     setFilteredValue(value);
-    console.log("Selected items value:", value);
+    // console.log("Selected items value:", value);
   }, [selectedItems]);
 
   // Fetch inventory data
@@ -194,7 +194,7 @@ export function Inventory({ steamId }: { steamId: string | null }) {
         const data = await fetchInventory(steamId);
         const items = data.item_data;
 
-        console.log("Inventory.tsx: Fetched inventory data:", data);
+        // console.log("Inventory.tsx: Fetched inventory data:", data);
 
         setError(data.error);
 
