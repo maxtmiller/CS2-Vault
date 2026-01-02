@@ -1,10 +1,10 @@
 import SteamUser from 'steam-user';
 import GlobalOffensive from 'globaloffensive';
-import fs from 'fs';
 import CRC32 from 'crc-32';
 import protobuf from 'protobufjs';
 import path from 'path';
 import { fetchData, getFullItemData, getFullPriceData, getFullSkinData } from "@/lib/data-loader"
+import fs from 'fs';
 
 
 function findFloatRange(float) {
@@ -50,6 +50,45 @@ let full_item_data;
 let full_price_data;
 let full_skin_data;
 
+let skinByWeaponPaint = new Map();
+let itemByDefIndex = new Map();
+let crateByDefIndex = new Map();
+let stickerById = new Map();
+let keychainById = new Map();
+
+
+function buildIndexes() {
+    for (const skin of Object.values(full_skin_data)) {
+        const key = `${skin.weapon.weapon_id}:${skin.paint_index ?? 0}`;
+        skinByWeaponPaint.set(key, skin);
+    }
+
+    for (const [key, item] of Object.entries(full_item_data)) {
+        if (key.startsWith("sticker-")) {
+            const stickerId = Number(key.split("-")[1]);
+            stickerById.set(stickerId, item);
+        } else if (key.startsWith("keychain-")) {
+            const keychainId = Number(key.split("-")[1]);
+            keychainById.set(keychainId, item);
+        } else if (key.startsWith("crate-")) {
+            const crateId = Number(key.split("-")[1]);
+            crateByDefIndex.set(crateId, item);
+        } else if (item.def_index != null && !key.startsWith("sticker_slab")) {
+            const itemId = Number(key.split("-")[1]);
+            itemByDefIndex.set(itemId, item);
+        }
+    }
+}
+
+
+let CEconItemPreviewDataBlock;
+
+async function initProto() {
+  const filePath = path.join(process.cwd(), 'public/econ.proto');
+  const root = await protobuf.load(filePath);
+  CEconItemPreviewDataBlock = root.lookupType('CEconItemPreviewDataBlock');
+}
+
 
 async function generateInspectLinkFromObject(props) {
     const previewLink = "steam://rungame/730/76561202255233023/+csgo_econ_action_preview%20";
@@ -80,10 +119,6 @@ async function generateInspectLinkFromObject(props) {
             })),
         };
 
-        const filePath = path.join(process.cwd(), 'public/econ.proto');
-        const root = await protobuf.load(filePath);
-        const CEconItemPreviewDataBlock = root.lookupType('CEconItemPreviewDataBlock');
-
         const errMsg = CEconItemPreviewDataBlock.verify(econ);
         if (errMsg) throw new Error(errMsg);
 
@@ -108,37 +143,26 @@ async function generateInspectLinkFromObject(props) {
     return `${previewLink}${hex}`;
 }
 
+
 async function mergeJsonFiles(allFiles) {
-    let mergedData = [];
-
-    for (const file of allFiles) {
-        try {
-            const jsonData = file;
-
-            mergedData = [ ...jsonData, ...mergedData ];
-
-        } catch (err) {
-            console.error(`Error reading file ${file}:`, err.message);
-        }
-    }
-
-    return JSON.stringify(mergedData, null, 2);
+    return allFiles.flat();
 }
 
 
 async function mergeData(mergedData) {
-
     try {
-        const jsonData = mergedData;
-        let items = JSON.parse(jsonData);
-    
+        let items = mergedData;
         const groupedItems = new Map();
-    
+
         for (const item of items) {
             const hasPaintIndex = Object.prototype.hasOwnProperty.call(item, 'paint_index');
             const hasStickerId = Object.prototype.hasOwnProperty.call(item, 'sticker_id');
             const isCharm = item.def_index === 1355;
-            
+
+            const itemQty = Number.isFinite(item.quantity) && item.quantity > 0
+                ? item.quantity
+                : 1;
+
             let key;
             if (isCharm) {
                 key = `no-paint-no-sticker-charm-${item.def_index}-${item.keychain_index}`;
@@ -147,20 +171,22 @@ async function mergeData(mergedData) {
             } else if (!hasPaintIndex && hasStickerId) {
                 key = `no-paint-with-sticker-${item.def_index}-${item.sticker_id}`;
             } else {
-                key = `other-${item.def_index}-${Math.random()}`;
+                key = `other-${item.def_index}-${item.paint_index ?? 0}-${item.paint_seed ?? 0}-${item.paint_wear ?? 0}`;
             }
-    
+
             if (groupedItems.has(key)) {
-                groupedItems.get(key).quantity += item.quantity;
+                groupedItems.get(key).quantity += itemQty;
             } else {
-                groupedItems.set(key, { ...item });
+                groupedItems.set(key, {
+                    ...item,
+                    quantity: itemQty
+                });
             }
         }
-    
-        items = Array.from(groupedItems.values());
 
+        items = Array.from(groupedItems.values());
         console.log('Merged items saved');
-        return JSON.stringify(items, null, 2);
+        return items;
     } catch (error) {
         console.error('Error processing items:', error);
     }
@@ -171,7 +197,7 @@ async function getStickers(old_data) {
     if (old_data.stickers?.length > 0) {
         const sticker_info = [];
         old_data.stickers.map(item => {
-            const sticker = Object.entries(full_item_data).find(([key]) => key.endsWith(`sticker-${item.sticker_id}`))?.[1];
+            const sticker = stickerById.get(item.sticker_id);
             if (sticker) {
                 const new_data =  {
                     sticker_id: item.sticker_id,
@@ -198,7 +224,7 @@ async function getItemInfoByDefIndex(old_data) {
     if (old_data.hasOwnProperty('paint_wear') && !old_data.hasOwnProperty('paint_index')) {
         old_data.paint_index = 0;
 
-        item = Object.values(full_skin_data).find(item => item.paint_index === null && item.weapon.weapon_id === old_data.def_index);
+        item = skinByWeaponPaint.get(`${old_data.def_index}:0`);
         if (!item) {
             return null;
         }
@@ -240,13 +266,15 @@ async function getItemInfoByDefIndex(old_data) {
     }
 
     if (old_data.hasOwnProperty('paint_wear')) {
-        item = Object.values(full_skin_data).find(item => item.paint_index === old_data.paint_index.toString() && item.weapon.weapon_id === old_data.def_index);
+        item = skinByWeaponPaint.get(`${old_data.def_index}:${old_data.paint_index}`);
     } else if (old_data.sticker_id) {
-        item = Object.entries(full_item_data).find(([key]) => key.endsWith(`sticker-${old_data.sticker_id}`))?.[1];
+        item = stickerById.get(old_data.sticker_id);
     } else if (old_data.hasOwnProperty('keychain_index')) {
-        item = Object.entries(full_item_data).find(([key]) => key.endsWith(`keychain-${old_data.keychain_index}`))?.[1];
+        item = keychainById.get(old_data.keychain_index);
+    } else if (old_data.rarity == 1) {
+        item = crateByDefIndex.get(old_data.def_index);
     } else {
-        item = Object.entries(full_item_data).find(([key]) => !key.startsWith("sticker") && key.endsWith(`-${old_data.def_index}`))?.[1];
+        item = itemByDefIndex.get(old_data.def_index);
     }
 
     if (!item || (item.hasOwnProperty('genuine') && !item.market_hash_name)) {
@@ -356,6 +384,10 @@ async function getItemInfoByDefIndex(old_data) {
         is_tradable: old_data.is_tradable,
     }
 
+    // if (category == "container") {
+    //     console.log(item_data);
+    // }
+
     return item ? item_data : null;
 }
 
@@ -382,22 +414,24 @@ function getWearName(float) {
 async function appendInfo(mergedData) {
 
     try {
-        const jsonData = mergedData;
-        const items = JSON.parse(jsonData);
+        const items = mergedData;
 
         for (let i = 0; i < items.length; i++) {
             let item = items[i];
 
-            if (item.def_index === 4001 && item.quantity === 1) {
+            if (!item || (item.def_index === 4001 && item.quantity === 1) || item.origin == 9 || (item.origin == 0 && item.flags == 0)) {
                 items.splice(i, 1);
                 i--;
+                continue;
             }
 
             item = await getStickers(item);
+            // items[i] = item;
             const new_data = await getItemInfoByDefIndex(item);
 
             if (new_data) {
                 Object.assign(item, new_data);
+                // items[i] = new_data;
             } else {
                 items.splice(i, 1);
                 i--;
@@ -405,7 +439,7 @@ async function appendInfo(mergedData) {
         }
 
         console.log("Item info appended")
-        return JSON.stringify(items, null, 2);
+        return items;
     } catch (error) {
         console.error('Error processing items: ', error);
     }
@@ -458,6 +492,9 @@ export async function initializeCSGOInventory(authData, loginType) {
                 full_item_data = getFullItemData();
                 full_price_data = getFullPriceData();
                 full_skin_data = getFullSkinData();
+                buildIndexes();
+
+                await initProto();
 
                 if (!csgo.inventory) throw new Error('Inventory not available.');
 
@@ -467,27 +504,25 @@ export async function initializeCSGOInventory(authData, loginType) {
 
                 // Separate normal items and storage units
                 const normalItems = [];
-                const casketItemsPromises = [];
 
                 for (const item of cleanedInventory) {
                     if (item.casket_contained_item_count) {
-                        // Create a promise to fetch the casket contents
-                        const casketPromise = getCasketItems(csgo, item)
-                            .then(casketContents => {
-                                items_data.push(casketContents);
-                                storage_units.push({ name: item.custom_name, count: item.casket_contained_item_count });
-                            })
-                            .catch(err => {
-                                console.log('Error fetching casket contents:', err.message);
+                        try {
+                            const contents = await getCasketItems(csgo, item);
+
+                            items_data.push(contents);
+                            storage_units.push({
+                                name: item.custom_name,
+                                count: item.casket_contained_item_count
                             });
-                        casketItemsPromises.push(casketPromise);
+                        } catch (err) {
+                            console.error('Failed to load casket:', item.id, err.message);
+                        }
                     } else {
                         normalItems.push(item);
                     }
                 }
-
-                // Wait for ALL casket promises at once
-                await Promise.all(casketItemsPromises);
+                
 
                 console.log('Casket items loaded.');
 
@@ -501,13 +536,15 @@ export async function initializeCSGOInventory(authData, loginType) {
                 mergedData = await mergeData(mergedData);
                 mergedData = await appendInfo(mergedData);
 
+                const mergedJsonData = JSON.stringify(mergedData, null, 2);
+
                 // Cleanup listeners
                 client.removeAllListeners();
                 csgo.removeAllListeners();
 
                 console.log("Listeners cleaned")
 
-                resolve({ success: true, item_data: mergedData, steamID, storage_units });
+                resolve({ success: true, item_data: mergedJsonData, steamID, storage_units });
 
             } catch (err) {
                 console.error('Error processing inventory:', err);
@@ -546,25 +583,33 @@ export async function initializeCSGOInventory(authData, loginType) {
 function mapInventoryItem(item, location) {
 
     const {
-        def_index, stickers, paint_wear, attribute, position, level, custom_desc, flags, quality,
-        original_id, origin, interior_item, style, in_use, equipped_state, kill_eater_score_type, kill_eater_value,
+        def_index, stickers, paint_wear, attribute, position, level, custom_desc, quality,
+        original_id, interior_item, style, in_use, equipped_state, kill_eater_score_type, kill_eater_value,
         ...rest
     } = item;
 
+   
     const givenDate = new Date(item.tradable_after);
     const now = new Date();
     let is_tradable = true;
     if (givenDate > now) is_tradable = false;
 
     if (def_index === 1355) {
-        const buffer = Buffer.from(attribute.find(attr => attr.def_index === 299).value_bytes);
-        const value = buffer.readUInt32LE(0);
-        return { def_index, ...rest, quantity: 1, keychain_index: value, location, is_tradable };
+        let value;
+        try {
+            const buffer = Buffer.from(attribute.find(attr => attr.def_index === 299).value_bytes);
+            value = buffer.readUInt32LE(0);
+        } catch (error) {
+            console.log(error);
+        }
+        
+        return { def_index, ...rest, quantity: 1, keychain_index: value || 3, location, is_tradable };
     }
 
     if (def_index === 1209 && Array.isArray(stickers) && stickers.length > 0) {
         return { def_index, quantity: 1, sticker_id: stickers[0].sticker_id, ...rest, quality, location, is_tradable };
     }
+
     if (paint_wear) {
         const wear_name = getWearName(paint_wear);
         if (kill_eater_score_type === 0) {

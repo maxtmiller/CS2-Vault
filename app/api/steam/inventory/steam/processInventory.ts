@@ -1,11 +1,12 @@
 import type { InventoryItem } from "@/lib/steam-api"
 import CRC32 from 'crc-32'
 import protobuf from 'protobufjs'
+import type { Type } from 'protobufjs'
 import path from 'path'
-import { ItemData, SkinData, PriceData } from "@/lib/data-loader"
+import { ItemData, SkinData } from "@/types/raw-item"
+import { PriceData } from "@/types/price"
 import { fetchData, getFullItemData, getFullPriceData, getFullSkinData } from "@/lib/data-loader"
 import fs from "fs"
-import { Item } from "@radix-ui/react-accordion"
 
 
 interface CS2Sticker {
@@ -43,6 +44,41 @@ let full_item_data: ItemData;
 let full_price_data: PriceData;
 let full_skin_data: SkinData;
 
+let skinByWeaponName = new Map();
+let itemByName = new Map();
+let stickerByName = new Map();
+
+
+function buildIndexes() {
+    for (const skin of Object.values(full_skin_data)) {
+
+        if (skin.name) {
+            skinByWeaponName.set(skin.name, skin);
+        }
+    }
+
+    for (const [key, item] of Object.entries(full_item_data)) {
+        if (key.startsWith("sticker-")) {
+            if (item.market_hash_name) {
+                stickerByName.set(item.market_hash_name, item);
+            }
+        } else if (item.def_index != null && !key.startsWith("sticker_slab")) {
+            if (item.name) {
+                itemByName.set(item.name, item);
+            }
+        }
+    }
+}
+
+
+let CEconItemPreviewDataBlock: Type;
+
+async function initProto() {
+  const filePath = path.join(process.cwd(), 'public/econ.proto');
+  const root = await protobuf.load(filePath);
+  CEconItemPreviewDataBlock = root.lookupType('CEconItemPreviewDataBlock');
+}
+
 
 async function generateInspectLinkFromObject(props: any): Promise<string | null> {
     const previewLink = "steam://rungame/730/76561202255233023/+csgo_econ_action_preview%20";
@@ -70,10 +106,6 @@ async function generateInspectLinkFromObject(props: any): Promise<string | null>
                 rotation: sticker.rotation === undefined ? 0 : sticker.rotation,
             })),
         };
-  
-        const filePath = path.join(process.cwd(), 'public/econ.proto');
-        const root = await protobuf.load(filePath);
-        const CEconItemPreviewDataBlock = root.lookupType('CEconItemPreviewDataBlock');
   
         const errMsg = CEconItemPreviewDataBlock.verify(econ);
         if (errMsg) throw new Error(errMsg);
@@ -128,9 +160,7 @@ function appendStickers(data: any) {
         const sticker = stickerNames[index];
         const sticker_name = "Sticker | " + sticker;
 
-        const item = Object.values(full_item_data).find(
-            (item: any) => item.market_hash_name === sticker_name
-        );
+        const item = stickerByName.get(sticker_name);
 
         if (!item) continue;
 
@@ -330,29 +360,22 @@ async function processItemData2(data: any, steamid: string): Promise<any | null>
         }
     }
 
+    let item;
     if (category === "sticker") {
-        const item = Object.values(full_item_data).find(
-            (item) => (item as any).market_hash_name === name
-        );
+        item = stickerByName.get(name);
         type = (item as any).type;
         sticker_id = Number.parseInt((item as any).id.split("sticker-")[1])
         def_index = 1209
     } else if (category === "weapon") {
-        const item = Object.values(full_skin_data).find(
-            (item) => (item as any).name === name
-        );
+        item = skinByWeaponName.get(name);
         paint_index = item?.paint_index ? Number.parseInt((item as any).paint_index) : 0;
         def_index = Number.parseInt((item as any).weapon.weapon_id)
         rarity = getRarityNum(rarity_name);
     } else if (category === "container") {
-        const item = Object.values(full_item_data).find(
-            (item) => (item as any).name === name
-        );
+        item = itemByName.get(name);
         def_index = Number.parseInt((item as any).id.split("crate-")[1])
     } else if (category === "agent") {
-        const item = Object.values(full_item_data).find(
-            (item) => (item as any).name === name
-        );
+        item = itemByName.get(name);
         def_index = Number.parseInt((item as any).id.split("agent-")[1])
     } else {
         def_index = 1
@@ -439,9 +462,9 @@ async function processItemData2(data: any, steamid: string): Promise<any | null>
         csfloat: CSFloat,
         quantity: data.quantity,
         steam: SteamMarket,
-        icon_url: imageUrl || "",
+        icon_url: imageUrl || undefined,
         inspect_link,
-        steam_price: price ? price.steam.last_ever : null,
+        steam_price: price ? (price as any)?.steam?.last_ever : null,
         is_tradable: true,
         def_index,
         custom_name: null,
@@ -468,19 +491,26 @@ async function processItemData2(data: any, steamid: string): Promise<any | null>
 }
 
 
-async function appendInfo(mergedData: string, steamId: string) {
+async function appendInfo(mergedData: any, steamId: string) {
 
     try {
-        const jsonData = mergedData;
-        const items = JSON.parse(jsonData);
+        const items = mergedData;
 
         for (let i = 0; i < items.length; i++) {
             let item = items[i];
 
+            if (!item || (item.def_index === 4001 && item.quantity === 1)) {
+                items.splice(i, 1);
+                i--;
+                continue;
+            }
+
             item = appendStickers(item);
+            items[i] = item;
             const new_data = await processItemData2(item, steamId);
 
             if (new_data) {
+                // Object.assign(item, new_data);
                 items[i] = new_data;
             } else {
                 items.splice(i, 1);
@@ -488,7 +518,7 @@ async function appendInfo(mergedData: string, steamId: string) {
             }
         }
 
-        return JSON.stringify(items, null, 2);
+        return items;
     } catch (error) {
         console.error('Error processing items: ', error);
     }
@@ -561,9 +591,15 @@ export async function processInventoryData(data: any, steamId: string): Promise<
     full_price_data = getFullPriceData()
     full_skin_data = getFullSkinData()
 
+    buildIndexes();
+
+    await initProto();
+
     const raw_data = appendProperties(assets, descriptions, asset_properties);
     
-    const processed_data = await appendInfo(JSON.stringify(raw_data), steamId);
+    const processed_data = await appendInfo(raw_data, steamId);
 
-    return { success: true, item_data: processed_data, steamID: steamId, storage_units: [] };
+    const stringified_processed_data = JSON.stringify(processed_data, null, 2);
+
+    return { success: true, item_data: stringified_processed_data, steamID: steamId, storage_units: [] };
 }

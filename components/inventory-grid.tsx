@@ -347,6 +347,8 @@ export function InventoryGrid({
         return "bg-purple-500";
       case "Distinguished":
         return "bg-blue-500";
+      case "Base Grade":
+        return "bg-gray-600";
       default:
         return "bg-gray-600";
     }
@@ -691,7 +693,7 @@ export function InventoryGrid({
                       )}
                       <Image
                         src={
-                          item.icon_url ||
+                          item.icon_url ??
                           "/placeholder.svg?height=200&width=200"
                         }
                         alt={item.name}
