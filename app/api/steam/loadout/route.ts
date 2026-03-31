@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { getItemSuggestionGemini, getCraftSuggestionGemini } from './getSuggestion';
+import { getItemSuggestionGemini, getCraftSuggestionGemini, getItemSuggestionCohere, getCraftSuggestionCohere } from './getSuggestion';
 import { getSuggestionItemInfo, ItemData } from './getItemData';
 import { getSuggestionCraftInfo } from './getCraftData';
 
@@ -53,12 +53,12 @@ export async function POST(request: NextRequest) {
         const data = await request.json();
         if (data.type === "items") {
             const items = data.data;
-            const results = await getItemSuggestionGemini(items);
+            const results = await getItemSuggestionCohere(items);
             const inventory = await processItemJsonData(results);
             return NextResponse.json(inventory);
         } else {
             const item = data.data.item;
-            const results = await getCraftSuggestionGemini(item);
+            const results = await getCraftSuggestionCohere(item);
             const inventory = await processStickerJsonData(results, item);
             return NextResponse.json(inventory);
         }

@@ -501,7 +501,7 @@ export function SelectedItems({
         </div>
       </div>
 
-      <ScrollArea className="w-full overflow-auto" orientation="horizontal">
+      <ScrollArea className="w-full overflow-auto">
         <div className="flex w-max space-x-4 pb-2">
           {items.map((item) => (
             <div
@@ -563,9 +563,9 @@ export function SelectedItems({
                   alt={item.name}
                   className="h-full w-full object-contain"
                 />
-                {item.stickers && item.stickers.length > 0 && (
+                {item.stickers && (item.stickers as any[]).length > 0 && (
                   <div className="flex items-center justify-evenly bottom-0 left-0 right-0 text-center text-xs gap-2">
-                    {item.stickers?.map((sticker, index) => (
+                    {(item.stickers as any[])?.map((sticker, index) => (
                       <img
                         key={index}
                         src={sticker.image}
@@ -610,8 +610,8 @@ export function SelectedItems({
       </ScrollArea>
 
       {/* Weapon Type Selection Buttons */}
-      {(items[0].type === "Gloves" ||
-        items[0].type === "Knives" ||
+      {(items[0].type === "★ Gloves" ||
+        items[0].type === "★ Knives" ||
         items.length > 1) && (
         <div className="mt-4 border-t border-gray-700 pt-4">
           <h3 className="text-sm font-medium mb-2">
@@ -737,7 +737,6 @@ export function SelectedItems({
 
           <ScrollArea
             className="w-full whitespace-nowrap"
-            orientation="horizontal"
           >
             <div className="flex space-x-4 pb-2">
               {responseItems.map((item) => (
@@ -803,9 +802,9 @@ export function SelectedItems({
                               className="object-contain"
                             />
                           </div>
-                          {item.stickers && item.stickers.length > 0 && (
+                          {item.stickers && (item.stickers as any[]).length > 0 && (
                             <div className="flex items-center justify-evenly bottom-0 left-0 right-0 text-center text-xs gap-2">
-                              {item.stickers?.map((sticker, index) => (
+                              {(item.stickers as any[])?.map((sticker, index) => (
                                 <img
                                   key={index}
                                   src={sticker.image}
@@ -889,16 +888,16 @@ export function SelectedItems({
                             )}
                           </div>
                           <div className="text-sm pt-2">
-                            {item.stickers && item.stickers.length > 0 && (
+                            {item.stickers && (item.stickers as any[]).length > 0 && (
                               <>
                                 <p className="font-medium text-center text-lg text-white">
                                   Craft:
                                 </p>
                                 <p className="text-gray-300 break-words whitespace-normal break-spaces-normal">
                                   4x -{" "}
-                                  {item.stickers[0].name
+                                  {(item.stickers as any[])[0].name
                                     .substring(
-                                      item.stickers[0].name.indexOf("|") + 1
+                                      (item.stickers as any[])[0].name.indexOf("|") + 1
                                     )
                                     .trim()}
                                 </p>
@@ -909,7 +908,7 @@ export function SelectedItems({
                                   <p className="text-green-400">
                                     $
                                     {Number(
-                                      item.stickers[0].steam_price
+                                      (item.stickers as any[])[0].steam_price
                                     ).toFixed(2)}
                                   </p>
                                 </div>
