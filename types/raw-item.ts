@@ -1,3 +1,5 @@
+import { StringToBoolean } from "class-variance-authority/types";
+
 interface Weapon {
   id: string;
   weapon_id: number;
@@ -62,6 +64,7 @@ interface Skin {
     stattrak: boolean;
     souvenir: boolean;
     paint_index: string;
+    paint_wear: number;
     rarity: Rarity;
     market_hash_name: string;
     team: Team;
@@ -71,7 +74,7 @@ interface Skin {
   }
 }
 
-interface Sticker {
+export interface Sticker {
   [key: string]: {
     id: string;
     name: string;
@@ -103,9 +106,11 @@ export interface Agent {
 
 export type ItemData = Skin | Sticker | Agent;
 
-export interface SkinData {
-  [key: string]: {
+export interface SkinItem {
     id: string;
+    def_index: number;
+    paint_seed: number;
+    custom_name?: String;
     skin_id: string;
     name: string;
     description: string;
@@ -118,12 +123,17 @@ export interface SkinData {
     stattrak: boolean;
     souvenir: boolean;
     paint_index: string;
+    paint_wear: number;
     wears: Wear[];
-    collections: Collection[],
-    crates: Crate[],
+    collections: Collection[];
+    stickers?: Sticker[];
+    crates: Crate[];
     team: Team;
     style: Style;
     legacy_model: boolean;
     image: string;
-  }
+}
+
+export interface SkinData {
+  [key: string]: SkinItem;
 }

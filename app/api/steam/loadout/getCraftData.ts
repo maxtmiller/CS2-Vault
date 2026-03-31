@@ -1,6 +1,7 @@
 import type { ResponseDataSticker } from './route'
 import { fetchData, getFullItemData, getFullPriceData, getFullSkinData } from "@/lib/data-loader"
-import type { PriceData, ItemData, SkinData } from '@/lib/data-loader'
+import { ItemData, SkinItem, Sticker } from "@/types/raw-item"
+import { PriceData } from "@/types/price"
 import type { InventoryItem } from "@/lib/steam-api"
 import protobuf from 'protobufjs';
 import CRC32 from 'crc-32';
@@ -21,7 +22,7 @@ function generateRandomID(length = 20) {
 
 
 
-async function generateInspectLinkFromObject(props: ItemData): Promise<string | null> {
+async function generateInspectLinkFromObject(props: SkinItem): Promise<string | null> {
     const previewLink = "steam://rungame/730/76561202255233023/+csgo_econ_action_preview%20";
 
     function floatToBytes(floatValue: number): number {
@@ -31,7 +32,7 @@ async function generateInspectLinkFromObject(props: ItemData): Promise<string | 
         return byteArray[0];
     }
 
-    async function generateHex(props: ItemData): Promise<string> {
+    async function generateHex(props: SkinItem): Promise<string> {
         const stickers = props.stickers || [];
 
         const econ = {
@@ -39,9 +40,9 @@ async function generateInspectLinkFromObject(props: ItemData): Promise<string | 
             paintindex: props.paint_index,
             paintseed: props.paint_seed,
             rarity: props.rarity,
-            paintwear: floatToBytes(props.paint_wear),
+            paintwear: floatToBytes(props?.paint_wear),
             customname: props.custom_name || "",
-            stickers: stickers.map(sticker => ({
+            stickers: stickers.map((sticker: Sticker) => ({
                 ...sticker,
                 stickerId: sticker.sticker_id,
                 offsetX: sticker.offset_x === undefined ? 0 : sticker.offsetX,

@@ -4,7 +4,8 @@ import protobuf from 'protobufjs';
 import CRC32 from 'crc-32';
 import type { ResponseDataItem } from './route'
 import { fetchData, getFullItemData, getFullPriceData, getFullSkinData } from "@/lib/data-loader"
-import type { PriceData, SkinData } from '@/lib/data-loader'
+import { SkinData } from "@/types/raw-item"
+import { PriceData } from "@/types/price"
 
 
 interface FloatRange {

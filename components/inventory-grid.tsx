@@ -699,6 +699,7 @@ export function InventoryGrid({
                         alt={item.name}
                         fill
                         className="object-contain p-2"
+                        priority={true}
                       />
                       {item.is_stattrak && (
                         <Badge className="absolute left-10 top-2 bg-orange-600">
