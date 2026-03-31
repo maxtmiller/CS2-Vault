@@ -1,3 +1,78 @@
-# CS2-Vault
- 
-Effortlessly view all your CS2 items, including those stored away, and discover the best suggestions for your collection.
+# [`CS2-Vault`](https://cs2vault.vercel.app/)
+
+**Effortlessly view all your CS2 items, including those hidden in storage units, and discover the perfect additions to your collection.**
+
+-----
+
+## Preview
+
+<img width="1710" height="988" alt="Screenshot 2026-03-31 at 3 14 28 in the afternoon" src="https://github.com/user-attachments/assets/b7db26b4-fba3-435c-820f-519f537da796" />
+
+-----
+
+## Features
+
+  * **Storage Unit Transparency:** Simulates a Steam connection to index and display items in Storage Units without steam client
+  * **Real-Time Pricing:** Links to aggregates live market data from both the **Steam Community Market** and **CSFloat** for accurate valuation
+  * **Instant Inspect Links:** Automatically generates `steam://rungame/730/...` links for every weapon skin and sticker in your vault
+  * **Intelligent Loadout Suggestions:** Select specific skins or agents, and the engine suggests matching items to complete the aesthetic
+  * **Sticker Craft Generator:** Generates sticker combinations on selected specific weapon, with inspect link to preview the craft in-game
+  * **Filtered Views:** Granular control to sort and view by specific weapon types, rarity, wear, quantity, or collection
+
+-----
+
+## Tech Stack
+
+  * **Frontend:** React 18, Next.js (App Router)
+  * **State Management:** Zustand for efficient inventory caching
+  * **Styling:** Tailwind CSS (Dark Theme optimized)
+  * **Steam Netork:** Steam network & authentication with [steam-user](https://www.npmjs.com/package/steam-user)
+  * **CS2 Network:** CS2 game coordinator simulation with [GlobalOffensive](https://www.npmjs.com/package/globaloffensive)
+  * **Item API**: Item data parsing with [ByMykel/CSGO-API](https://github.com/ByMykel/CSGO-API)
+  * **Language:** TypeScript
+
+-----
+
+## Local Setup
+
+1.  Clone the repository:
+
+<!-- end list -->
+
+```bash
+git clone https://github.com/yourusername/CS2-Vault.git
+cd CS2-Vault
+```
+
+2.  Install dependencies:
+
+<!-- end list -->
+
+```bash
+npm install
+```
+
+3.  Configure environment variables:
+
+      * Create a `.env.local` file.
+      * Add your Gemini API key
+
+4.  Run the development server:
+
+<!-- end list -->
+
+```bash
+npm run dev
+```
+
+5.  Open [http://localhost:3000](https://www.google.com/search?q=http://localhost:3000) to view your vault.
+
+-----
+
+## Next Steps
+
+  * **Inventory Value History:** Track the price fluctuations of your specific skins over time
+  * **Inventory Worth Sharing:** Generate a public, read-only link to showcase your collection or specific crafts to others
+  * **Interactive 3D Preview:** Integrate a web-based 3D viewer (using Three.js) to rotate skins and preview sticker placements
+  * **Mobile Companion:** Responsive mobile view for checking market prices on the go
+  * **Coherence Score:** Use a simple heuristic or ML model to rate a user's loadout based on color coordination, rarity, and theme
