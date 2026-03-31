@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import 'lzma';
 
 // API route handler
 export async function POST(request: NextRequest) {

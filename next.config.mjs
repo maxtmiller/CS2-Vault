@@ -29,6 +29,9 @@ const nextConfig = {
     webpackBuildWorker: true,
     parallelServerBuildTraces: true,
     parallelServerCompiles: true,
+    outputFileTracingIncludes: {
+      '/api/steam/inventory/jwt': ['./node_modules/lzma/**/*'],
+    },
   },
   webpack: (config, options) => {
     // Add your externals here
