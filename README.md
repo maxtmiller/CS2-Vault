@@ -1,5 +1,9 @@
 # [`CS2-Vault`](https://cs2vault.vercel.app/)
 
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB)
+![Next.js](https://img.shields.io/badge/Next.js-000000?style=flat&logo=nextdotjs&logoColor=white)
+
 **Effortlessly view all your CS2 items, including those hidden in storage units, and discover the perfect additions to your collection.**
 
 -----
@@ -72,7 +76,7 @@ npm run dev
 ## Next Steps
 
   * **Inventory Value History:** Track the price fluctuations of your specific skins over time
-  * **Inventory Worth Sharing:** Generate a public, read-only link to showcase your collection or specific crafts to others
-  * **Interactive 3D Preview:** Integrate a web-based 3D viewer (using Three.js) to rotate skins and preview sticker placements
+  * **Inventory Worth Sharing:** Generate a public, read-only link to showcase your collection
+  * **Interactive 3D Preview:** Integrate a web-based 3D viewer to rotate skins and preview stickers
   * **Mobile Companion:** Responsive mobile view for checking market prices on the go
-  * **Coherence Score:** Use a simple heuristic or ML model to rate a user's loadout based on color coordination, rarity, and theme
+  * **Coherence Score:** Simple heuristic or ML model to rate a loadout based on color, and theme
