@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CS2 Vault — Cover</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    background: #0b0f1a;
+    font-family: 'Barlow', sans-serif;
+  }
+
+  .bg {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 900px 600px at 70% 50%, rgba(26,82,196,0.18) 0%, transparent 70%),
+      radial-gradient(ellipse 600px 400px at 15% 80%, rgba(255,165,0,0.08) 0%, transparent 60%),
+      #0b0f1a;
+  }
+
+  .grid-lines {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(55,138,221,0.06) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(55,138,221,0.06) 1px, transparent 1px);
+    background-size: 80px 80px;
+    mask-image: radial-gradient(ellipse 80% 80% at 60% 50%, black 0%, transparent 100%);
+  }
+
+  .content {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding: 0 140px;
+    gap: 120px;
+  }
+
+  .left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .eyebrow {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    color: #f0a500;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .eyebrow::before {
+    content: '';
+    display: block;
+    width: 32px;
+    height: 2px;
+    background: #f0a500;
+  }
+
+  h1 {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 112px;
+    font-weight: 700;
+    line-height: 0.9;
+    color: #ffffff;
+    letter-spacing: -2px;
+    margin-bottom: 36px;
+  }
+
+  h1 span {
+    color: #378add;
+  }
+
+  .tagline {
+    font-size: 22px;
+    font-weight: 300;
+    color: rgba(255,255,255,0.55);
+    letter-spacing: 0.5px;
+    line-height: 1.6;
+    max-width: 520px;
+    margin-bottom: 60px;
+  }
+
+  .pills {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+
+  .pill {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 10px 22px;
+    border-radius: 3px;
+    color: rgba(255,255,255,0.7);
+    border: 1px solid rgba(55,138,221,0.35);
+    background: rgba(55,138,221,0.08);
+  }
+
+  .pill.accent {
+    color: #f0a500;
+    border-color: rgba(240,165,0,0.4);
+    background: rgba(240,165,0,0.08);
+  }
+
+  .right {
+    width: 520px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+    position: relative;
+  }
+
+  .logo-ring {
+    width: 260px;
+    height: 260px;
+    border-radius: 52px;
+    background: linear-gradient(145deg, rgba(55,138,221,0.25), rgba(240,165,0,0.15));
+    border: 1px solid rgba(55,138,221,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .logo-ring::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 52px;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(55,138,221,0.6), transparent 50%, rgba(240,165,0,0.4));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+
+  .logo-ring img {
+    width: 200px;
+    height: 200px;
+    border-radius: 40px;
+  }
+
+  .stat-row {
+    display: flex;
+    gap: 20px;
+  }
+
+  .stat {
+    flex: 1;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 6px;
+    padding: 20px 24px;
+    text-align: center;
+  }
+
+  .stat-num {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 32px;
+    font-weight: 700;
+    color: #378add;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .stat-num.gold { color: #f0a500; }
+  .stat-num.green { color: #63c922; }
+
+  .stat-label {
+    font-size: 12px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  .corner-accent {
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    border-color: rgba(55,138,221,0.25);
+    border-style: solid;
+  }
+
+  .corner-accent.tl {
+    top: 40px; left: 100px;
+    border-width: 1px 0 0 1px;
+  }
+
+  .corner-accent.br {
+    bottom: 40px; right: 100px;
+    border-width: 0 1px 1px 0;
+    border-color: rgba(240,165,0,0.2);
+  }
+
+  .divider {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 50%;
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, rgba(55,138,221,0.3) 30%, rgba(55,138,221,0.3) 70%, transparent);
+  }
+
+  .version-badge {
+    position: absolute;
+    bottom: 52px;
+    left: 140px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.2);
+  }
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="grid-lines"></div>
+<div class="corner-accent tl"></div>
+<div class="corner-accent br"></div>
+<div class="divider"></div>
+
+<div class="content">
+    <div class="left">
+        <div class="eyebrow">Product Demo</div>
+        <h1>CS2<br><span>Vault</span></h1>
+        <p class="tagline">Your complete CS2 inventory, simplified and enhanced. Track every skin, capsule, and storage unit — all in one place.</p>
+        <div class="pills">
+            <div class="pill">Inventory Tracker</div>
+            <div class="pill">Storage Units</div>
+            <div class="pill accent">AI-Powered Insights</div>
+        </div>
+    </div>
+
+  <div class="right">
+    <div class="logo-ring">
+      <img src="logo.png" alt="CS2 Vault Logo">
+    </div>
+    <div class="stat-row">
+        <div class="stat">
+            <div class="stat-num">50,000+</div>
+            <div class="stat-label">Items Indexed</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num gold">100+</div>
+            <div class="stat-label">Storage Units</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num green">25+</div>
+            <div class="stat-label">Item Filters</div>
+        </div>
+    </div>
+  </div>
+</div>
+
+<div class="version-badge">CS2 Vault · 2026</div>
+</body>
+</html>
