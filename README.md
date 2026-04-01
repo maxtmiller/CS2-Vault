@@ -61,7 +61,7 @@ npm install
 3.  Configure environment variables:
 
       * Create a `.env.local` file.
-      * Add your Gemini API key
+      * Add your Gemini / Cohere API key
 
 4.  Run the development server:
 
