@@ -928,6 +928,8 @@ export function InventoryGrid({
                             <p className="text-gray-300">Float:</p>
                             {item.paint_wear === -1 ? (
                               <p className="font-mono text-white">Unknown</p>
+                            ) : item.paint_wear === null ? (
+                              <p className="font-mono text-white">Unpainted</p>
                             ) : (
                               <p className="font-mono text-white">
                                 {item.paint_wear.toFixed(10)}
