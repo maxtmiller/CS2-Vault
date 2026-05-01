@@ -45,6 +45,8 @@ function findFloatRange(float) {
     return null;
 }
 
+const knifeDefIndexes = new Set([500, 503, 505, 506, 507, 508, 509, 512, 513, 514, 515, 516, 517, 518, 519, 520, 521, 522, 523, 525, 526 ]);
+
 
 let full_item_data;
 let full_price_data;
@@ -113,9 +115,9 @@ async function generateInspectLinkFromObject(props) {
             stickers: stickers.map(sticker => ({
                 ...sticker,
                 stickerId: sticker.sticker_id,
-                offsetX: sticker.offset_x === undefined ? 0 : sticker.offsetX,
-                offsetY: sticker.offset_y === undefined ? 0 : sticker.offsetY,
-                rotation: sticker.rotation === undefined ? 0 : sticker.rotation,
+                offsetX: sticker.offset_x ?? 0,
+                offsetY: sticker.offset_y ?? 0,
+                rotation: sticker.rotation ?? 0,
             })),
         };
 
@@ -221,7 +223,7 @@ async function getItemInfoByDefIndex(old_data) {
     if (old_data.def_index ===  1201 || (old_data.def_index === 36 && old_data.paint_index === 125)) return null;
 
     let item;
-    if (old_data.hasOwnProperty('paint_wear') && !old_data.hasOwnProperty('paint_index')) {
+    if (old_data.def_index >= 500 && old_data.def_index <= 550 && !old_data.hasOwnProperty('paint_wear') && !old_data.hasOwnProperty('paint_index')) {
         old_data.paint_index = 0;
 
         item = skinByWeaponPaint.get(`${old_data.def_index}:0`);
@@ -252,7 +254,7 @@ async function getItemInfoByDefIndex(old_data) {
         }
         const SteamMarket = `https://steamcommunity.com/market/listings/730/${encodedString}`
         const item_data = {
-            name: item.name+' Vanilla',
+            name: item.name+'| Vanilla',
             rarity_name: "Covert",
             type: "Knives",
             category: category,
@@ -419,19 +421,17 @@ async function appendInfo(mergedData) {
         for (let i = 0; i < items.length; i++) {
             let item = items[i];
 
-            if (!item || (item.def_index === 4001 && item.quantity === 1) || item.origin == 9 || (item.origin == 0 && item.flags == 0)) {
+            if (!item || (item.def_index === 4001 && item.quantity === 1) || item.origin == 9) {
                 items.splice(i, 1);
                 i--;
                 continue;
             }
 
             item = await getStickers(item);
-            // items[i] = item;
             const new_data = await getItemInfoByDefIndex(item);
 
             if (new_data) {
                 Object.assign(item, new_data);
-                // items[i] = new_data;
             } else {
                 items.splice(i, 1);
                 i--;
@@ -587,7 +587,6 @@ function mapInventoryItem(item, location) {
         original_id, interior_item, style, in_use, equipped_state, kill_eater_score_type, kill_eater_value,
         ...rest
     } = item;
-
    
     const givenDate = new Date(item.tradable_after);
     const now = new Date();
