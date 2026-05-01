@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { InventoryGrid } from "@/components/inventory-grid";
 import {
   InventoryFilters,
@@ -11,14 +11,20 @@ import { LoadingInventory } from "@/components/loading-inventory";
 import { UserProfile } from "@/components/user-profile";
 import { fetchInventory, type InventoryItem } from "@/lib/steam-api";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, Github, Linkedin, Instagram, Mail } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { ChevronDown, Github, SlidersHorizontal } from "lucide-react";
 import { SteamIcon } from "@/components/ui/steam-icon";
 import { SelectedItems } from "@/components/selected-items";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { DollarSign, Euro, PoundSterling } from "lucide-react";
 
-// Supported currencies
 const currencies = [
   {
     code: "USD",
@@ -44,8 +50,7 @@ export function Inventory({ steamId }: { steamId: string | null }) {
   const [loginType, setLoginType] = useState<string>("");
   const [selectedCurrency, setSelectedCurrency] = useState(() => {
     if (typeof window !== "undefined") {
-      const storedCurrency = localStorage.getItem("selected_currency");
-      return storedCurrency || "USD";
+      return localStorage.getItem("selected_currency") || "USD";
     }
     return "USD";
   });
@@ -58,6 +63,7 @@ export function Inventory({ steamId }: { steamId: string | null }) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [filteredItems, setFilteredItems] = useState<InventoryItem[]>([]);
   const [selectedItems, setSelectedItems] = useState<InventoryItem[]>([]);
+  const [mobileFilterOpen, setMobileFilterOpen] = useState(false);
   const filterRef = useRef<HTMLDivElement>(null);
   const itemsRef = useRef<HTMLDivElement>(null);
   const mainRef = useRef<HTMLDivElement>(null);
@@ -109,20 +115,24 @@ export function Inventory({ steamId }: { steamId: string | null }) {
   const currentPriceBaseRef = useRef("USD");
   const { toast } = useToast();
 
-  // Function to handle logout and redirect to homepage
+  const activeFilterCount = useMemo(() => {
+    return [
+      ...Object.values(filters.categories),
+      ...Object.values(filters.types),
+      ...Object.values(filters.exteriors),
+      ...Object.values(filters.special),
+      filters.searchTerm ? true : false,
+    ].filter(Boolean).length;
+  }, [filters]);
+
   const handleLogout = () => {
     localStorage.removeItem("login_type");
     localStorage.removeItem("inventory_data");
     fetch(`/api/auth/logout?steamid=${steamId}`, { method: "POST" })
-      .then(() => {
-        window.location.replace("/");
-      })
-      .catch((error) => {
-        console.error("Logout error:", error);
-      });
+      .then(() => window.location.replace("/"))
+      .catch((error) => console.error("Logout error:", error));
   };
 
-  // Update steam prices based on currency change
   function updateSteamPrices(multiplier: number) {
     setItems((prevItems) =>
       prevItems.map((item) => ({
@@ -135,94 +145,61 @@ export function Inventory({ steamId }: { steamId: string | null }) {
     );
   }
 
-  // Get conversion rate by currency code
   function getRateByCurrency(code: string) {
     const currency = currencies.find((c) => c.code === code);
-    return currency ? currency.rate : 1; // fallback to 1 if not found
+    return currency ? currency.rate : 1;
   }
 
-  // Handle currency change effects
   useEffect(() => {
-    const newCurrencyCode = selectedCurrency;
-    const oldCurrencyCode = currentPriceBaseRef.current;
-
-    // 1. Get the rates
-    const oldRate = getRateByCurrency(oldCurrencyCode);
-    const newRate = getRateByCurrency(newCurrencyCode);
-
-    // 2. Calculate the multiplier
-    // Convert from the old base (oldRate) to the new base (newRate)
-    const multiplier = newRate / oldRate;
-
-    // 3. Update the prices
-    updateSteamPrices(multiplier);
-
-    // 4. Update the reference and storage
-    currentPriceBaseRef.current = newCurrencyCode;
-    localStorage.setItem("selected_currency", newCurrencyCode);
+    const oldRate = getRateByCurrency(currentPriceBaseRef.current);
+    const newRate = getRateByCurrency(selectedCurrency);
+    updateSteamPrices(newRate / oldRate);
+    currentPriceBaseRef.current = selectedCurrency;
+    localStorage.setItem("selected_currency", selectedCurrency);
   }, [selectedCurrency]);
 
-  // On mount, load selected currency from localStorage
   useEffect(() => {
     const storedCurrency = localStorage.getItem("selected_currency");
-    if (storedCurrency) {
-      setSelectedCurrency(storedCurrency);
-    }
+    if (storedCurrency) setSelectedCurrency(storedCurrency);
   }, []);
 
-  // Update filtered value when selected items change
   useEffect(() => {
-    // console.log("Item selected");
     const value = selectedItems.reduce(
       (sum, item) => sum + (item.steam_price || 0) * (item.quantity || 1),
       0
     );
     setFilteredValue(value);
-    // console.log("Selected items value:", value);
   }, [selectedItems]);
 
-  // Fetch inventory data
   useEffect(() => {
     async function loadInventory() {
       if (!steamId) {
         setLoading(false);
         return;
       }
-
       setLoading(true);
       try {
         const data = await fetchInventory(steamId);
         const items = data.item_data;
-
-        console.log("Inventory.tsx: Fetched inventory data:", data);
-
         setError(data.error);
-
         setStorageUnits(data.storage_units);
         setItems(items);
         setFilteredItems(items);
         setLoginType(data.type);
-
-        // On initial load, convert prices if needed
         updateSteamPrices(getRateByCurrency(selectedCurrency));
-
-        // Calculate initial filtered value (all items)
-        const initialValue = items.reduce(
-          (sum, item) => sum + (item.steam_price || 0) * (item.quantity || 1),
-          0
+        setFilteredValue(
+          items.reduce(
+            (sum, item) => sum + (item.steam_price || 0) * (item.quantity || 1),
+            0
+          )
         );
-        setFilteredValue(initialValue);
-
         if (!data.success) {
           toast({
-            title: "Error fetching invetory",
+            title: "Error fetching inventory",
             description: data.error,
             variant: "destructive",
           });
-          setTimeout(() => {
-            handleLogout();
-          }, 5000);
-          throw new Error(`API error: Error inventory data`);
+          setTimeout(() => handleLogout(), 5000);
         }
       } catch (error) {
         console.log("Error loading inventory:", error);
@@ -230,271 +207,261 @@ export function Inventory({ steamId }: { steamId: string | null }) {
         setLoading(false);
       }
     }
-
     loadInventory();
   }, [steamId]);
 
-  // Handle scroll events to detect when user has scrolled
   useEffect(() => {
     const handleScroll = () => {
-      // Get the current scroll position
       const scrollPosition = window.scrollY;
-      const windowHeight = window.innerHeight;
       const documentHeight = document.documentElement.scrollHeight;
-
-      // Calculate scroll percentage (0 to 1)
+      const windowHeight = window.innerHeight;
       const scrollPercentage = Math.min(
         scrollPosition / (documentHeight - windowHeight),
         1
       );
 
-      // Update isScrolled state for header visibility
       setIsScrolled(scrollPosition > 110);
 
-      // Synchronize filter scroll with page scroll
       if (filterRef.current) {
-        const filterHeight = filterRef.current.scrollHeight;
-        const filterContainerHeight = filterRef.current.clientHeight;
-
-        // Calculate the maximum scroll position for the filter
-        const maxFilterScroll = filterHeight - filterContainerHeight;
-
-        // Set the filter's scroll position based on the page scroll percentage
+        const maxFilterScroll =
+          filterRef.current.scrollHeight - filterRef.current.clientHeight;
         filterRef.current.scrollTop = scrollPercentage * maxFilterScroll;
       }
     };
-
-    // Add scroll event listener
     window.addEventListener("scroll", handleScroll);
-
-    // Initial call to set correct positions
     handleScroll();
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Handle total value change from filtered items
-  const handleTotalValueChange = (value: number) => {
-    setFilteredValue(value);
-  };
-
-  // Handle showing more items
-  const handleShowMore = () => {
-    setVisibleItems((prev) => prev + 24); // Add 4 more rows (6 items per row)
-  };
-
-  // Handle filtered items update
-  const handleFilteredItemsChange = (items: InventoryItem[]) => {
+  const handleTotalValueChange = (value: number) => setFilteredValue(value);
+  const handleShowMore = () => setVisibleItems((prev) => prev + 24);
+  const handleFilteredItemsChange = (items: InventoryItem[]) =>
     setFilteredItems(items);
-  };
 
-  // Handle item selection
   const handleSelectItem = (item: InventoryItem) => {
     setSelectedItems((prev) => {
-      // Check if item is already selected
-      const isSelected = prev.some(
-        (selectedItem) => selectedItem.id === item.id
-      );
-
-      if (isSelected) {
-        // Remove item if already selected
-        return prev.filter((selectedItem) => selectedItem.id !== item.id);
-      } else {
-        // Add item if not selected
-        return [...prev, item];
-      }
+      const isSelected = prev.some((s) => s.id === item.id);
+      return isSelected ? prev.filter((s) => s.id !== item.id) : [...prev, item];
     });
   };
 
-  // Handle removing a selected item
-  const handleRemoveSelectedItem = (id: string) => {
+  const handleRemoveSelectedItem = (id: string) =>
     setSelectedItems((prev) => prev.filter((item) => item.id !== id));
-  };
 
-  // Handle clearing all selected items
-  const handleClearSelectedItems = () => {
-    setSelectedItems([]);
-  };
+  const handleClearSelectedItems = () => setSelectedItems([]);
+
+  const currencyChar =
+    currencies.find((c) => c.code === selectedCurrency)?.char ?? "$";
 
   return (
-    <>
-      <div
-        className="min-h-screen bg-gray-900 text-white"
-        style={{ maxHeight: "100vh" }}
+    <div className="min-h-screen bg-[#0a0e1a] text-white">
+      {/* Header */}
+      <header
+        className={`${
+          isScrolled ? "fixed" : "sticky"
+        } w-full top-0 z-50 border-b border-white/5 bg-gray-950/90 backdrop-blur-md shadow-lg transition-all duration-300`}
       >
-        <header
-          className={`${
-            isScrolled ? "fixed" : "sticky"
-          } w-full top-0 z-50 border-b border-gray-800 bg-gray-950 shadow-md transition-all duration-300`}
-        >
-          <div className="container mx-auto p-4">
-            <div className="flex items-center justify-between">
-              {/* Left section */}
-              <div className="flex items-center gap-4">
-                <img src="/logo.png" width="35" height="35"></img>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-                  CS2 Vault
-                </h1>
-              </div>
-
-              {/* Stats in navbar when scrolled */}
-              <div
-                className={`hidden md:flex items-center space-x-6 ml-8 text-sm transition-all duration-300 ${
-                  isScrolled
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 -translate-y-4 pointer-events-none"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-gray-400">Results:</span>
-                  <span className="font-bold">{items.length}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-gray-400">Storage Units:</span>
-                  <span className="font-bold">{storageUnits}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-gray-400">Filtered Value:</span>
-                  <span className="font-bold text-green-500">
-                    {currencies.find((c) => c.code === selectedCurrency)?.char}
-                    {filteredValue.toFixed(2)}
-                  </span>
-                </div>
-                {/* <div className="flex items-center gap-3">
-                    <span className="text-gray-400">Total Value:</span>
-                    <span className="font-bold text-green-500">
-                      {currencies.find(c => c.code === selectedCurrency)?.char}{items.reduce((sum, item) => sum + (item.steam_price || 0) * (item.quantity || 1), 0).toFixed(2)}
-                    </span>
-                  </div> */}
-              </div>
-
-              {/* Right section */}
-              <div className="flex items-center gap-4">
-                {steamId && (
-                  <UserProfile
-                    steamId={steamId}
-                    currencies={currencies}
-                    selectedCurrency={selectedCurrency}
-                    setSelectedCurrency={setSelectedCurrency}
-                  />
-                )}
-              </div>
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between gap-4">
+            {/* Logo */}
+            <div className="flex items-center gap-3 shrink-0">
+              <img src="/logo.png" width="30" height="30" alt="CS2 Vault" />
+              <h1 className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                CS2 Vault
+              </h1>
             </div>
-          </div>
-        </header>
 
-        <main ref={mainRef} className="container mx-auto p-4 pb-12 flex-grow">
-          {/* Only show stats when not scrolled - with smooth transition */}
-          <div
-            className={`mb-6 transition-all duration-300 ${
-              isScrolled
-                ? "opacity-0 max-h-0 overflow-hidden"
-                : "opacity-100 max-h-20"
-            }`}
-          >
-            <InventoryStats
-              items={items}
-              storageUnits={storageUnits}
-              filteredValue={filteredValue}
-              currencies={currencies}
-              selectedCurrency={selectedCurrency}
-              hideId={true}
-            />
-          </div>
-
-          {/* Selected Items Section */}
-          <SelectedItems
-            items={selectedItems}
-            onRemoveItem={handleRemoveSelectedItem}
-            onClearAll={handleClearSelectedItems}
-          />
-
-          <div className="grid gap-6 md:grid-cols-[300px_1fr]">
-            {/* Sticky filters */}
+            {/* Scrolled stats — desktop only */}
             <div
-              ref={filterRef}
-              className="sticky top-24 self-start max-h-[calc(100vh-120px)] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900"
+              className={`hidden md:flex items-center gap-5 text-sm transition-all duration-300 ${
+                isScrolled
+                  ? "opacity-100 translate-y-0"
+                  : "opacity-0 -translate-y-3 pointer-events-none"
+              }`}
             >
-              <InventoryFilters
-                onFilterChange={setFilters}
-                storageUnitNames={[]}
-              />
+              <div className="flex items-center gap-1.5">
+                <span className="text-gray-500">Items</span>
+                <span className="font-semibold">{items.length}</span>
+              </div>
+              <div className="w-px h-3.5 bg-gray-700" />
+              <div className="flex items-center gap-1.5">
+                <span className="text-gray-500">Storage</span>
+                <span className="font-semibold">{storageUnits ?? 0}</span>
+              </div>
+              <div className="w-px h-3.5 bg-gray-700" />
+              <div className="flex items-center gap-1.5">
+                <span className="text-gray-500">Value</span>
+                <span className="font-semibold text-green-400">
+                  {currencyChar}{filteredValue.toFixed(2)}
+                </span>
+              </div>
             </div>
 
-            <div ref={itemsRef}>
-              {loading ? (
-                <LoadingInventory />
-              ) : (
-                <>
-                  <InventoryGrid
-                    items={items}
-                    filters={filters}
-                    onTotalValueChange={handleTotalValueChange}
-                    visibleItems={visibleItems}
-                    onFilteredItemsChange={handleFilteredItemsChange}
-                    onSelectItem={handleSelectItem}
-                    selectedItemIds={selectedItems.map((item) => item.id)}
-                    error={error}
-                    currencies={currencies}
-                    selectedCurrency={selectedCurrency}
-                    setLoading={setLoading}
-                    setError={setError}
-                    setStorageUnits={setStorageUnits}
-                    setItems={setItems}
-                    setTotalFilteredItems={setFilteredItems}
-                    setFilteredValue={setFilteredValue}
-                    loginType={loginType}
-                  />
-
-                  {/* Show more button - only if there are more items to show */}
-                  {filteredItems.length > 0 &&
-                    visibleItems < filteredItems.length && (
-                      <div className="mt-6 flex justify-center pb-8">
-                        <Button
-                          onClick={handleShowMore}
-                          variant="outline"
-                          className="gap-2 border-gray-700 bg-gray-800 hover:bg-gray-700"
-                        >
-                          Show More
-                          <ChevronDown className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    )}
-                </>
+            {/* User profile */}
+            <div className="shrink-0">
+              {steamId && (
+                <UserProfile
+                  steamId={steamId}
+                  currencies={currencies}
+                  selectedCurrency={selectedCurrency}
+                  setSelectedCurrency={setSelectedCurrency}
+                />
               )}
             </div>
           </div>
-        </main>
+        </div>
+      </header>
 
-        {/* Footer to prevent white background when scrolling past content */}
-        <footer className="bg-gray-900 py-6 border-t-2 border-gray-600 pt-2">
-          <div className="container mx-auto pt-6 pb-2 flex items-center justify-between text-sm text-gray-500">
-            <Link
-              href="https://github.com/maxtmiller"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-primary transition-colors pl-6"
-              aria-label="GitHub"
-            >
-              <Github className="h-7 w-7" />
-            </Link>
-            <p className="text-center text-lg w-full">
-              @ 2025 CS2 Vault • Not affiliated with Valve or Steam
-            </p>
-            <Link
-              href="https://steamcommunity.com/id/LowKey-W-Loki/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-primary transition-colors pr-6"
-              aria-label="Steam"
-            >
-              <SteamIcon className="h-7 w-7" />
-            </Link>
+      <main ref={mainRef} className="container mx-auto px-4 py-5 pb-16">
+        {/* Stats — hidden when scrolled */}
+        <div
+          className={`mb-5 transition-all duration-300 ${
+            isScrolled
+              ? "opacity-0 max-h-0 overflow-hidden mb-0"
+              : "opacity-100 max-h-40"
+          }`}
+        >
+          <InventoryStats
+            items={items}
+            storageUnits={storageUnits}
+            filteredValue={filteredValue}
+            currencies={currencies}
+            selectedCurrency={selectedCurrency}
+            hideId={true}
+          />
+        </div>
+
+        {/* Selected items */}
+        <SelectedItems
+          items={selectedItems}
+          onRemoveItem={handleRemoveSelectedItem}
+          onClearAll={handleClearSelectedItems}
+        />
+
+        <div className="grid gap-5 md:grid-cols-[272px_1fr]">
+          {/* Desktop sidebar filters */}
+          <div
+            ref={filterRef}
+            className="hidden md:block sticky top-[72px] self-start max-h-[calc(100vh-88px)] overflow-y-auto"
+          >
+            <InventoryFilters
+              onFilterChange={setFilters}
+              storageUnitNames={[]}
+            />
           </div>
-        </footer>
-      </div>
-    </>
+
+          {/* Items column */}
+          <div ref={itemsRef}>
+            {/* Mobile filter trigger */}
+            <div className="md:hidden mb-4">
+              <Sheet open={mobileFilterOpen} onOpenChange={setMobileFilterOpen}>
+                <SheetTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2 border-gray-700 bg-gray-900/80 hover:bg-gray-800 text-white relative"
+                  >
+                    <SlidersHorizontal className="h-4 w-4" />
+                    Filters
+                    {activeFilterCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-blue-500 text-[10px] font-bold flex items-center justify-center leading-none">
+                        {activeFilterCount}
+                      </span>
+                    )}
+                  </Button>
+                </SheetTrigger>
+                <SheetContent
+                  side="left"
+                  className="w-[290px] bg-gray-950 border-gray-800/60 p-0 overflow-y-auto"
+                >
+                  <SheetHeader className="px-4 py-3 border-b border-gray-800/60">
+                    <SheetTitle className="text-white text-base">
+                      Filters
+                      {activeFilterCount > 0 && (
+                        <span className="ml-2 text-xs text-blue-400 font-normal">
+                          {activeFilterCount} active
+                        </span>
+                      )}
+                    </SheetTitle>
+                  </SheetHeader>
+                  <div className="p-4">
+                    <InventoryFilters
+                      onFilterChange={setFilters}
+                      storageUnitNames={[]}
+                    />
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
+
+            {loading ? (
+              <LoadingInventory />
+            ) : (
+              <>
+                <InventoryGrid
+                  items={items}
+                  filters={filters}
+                  onTotalValueChange={handleTotalValueChange}
+                  visibleItems={visibleItems}
+                  onFilteredItemsChange={handleFilteredItemsChange}
+                  onSelectItem={handleSelectItem}
+                  selectedItemIds={selectedItems.map((item) => item.id)}
+                  error={error}
+                  currencies={currencies}
+                  selectedCurrency={selectedCurrency}
+                  setLoading={setLoading}
+                  setError={setError}
+                  setStorageUnits={setStorageUnits}
+                  setItems={setItems}
+                  setTotalFilteredItems={setFilteredItems}
+                  setFilteredValue={setFilteredValue}
+                  loginType={loginType}
+                />
+
+                {filteredItems.length > 0 &&
+                  visibleItems < filteredItems.length && (
+                    <div className="mt-6 flex justify-center pb-8">
+                      <Button
+                        onClick={handleShowMore}
+                        variant="outline"
+                        className="gap-2 border-gray-700 bg-gray-900/60 hover:bg-gray-800 text-white"
+                      >
+                        Show More
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+              </>
+            )}
+          </div>
+        </div>
+      </main>
+
+      <footer className="bg-gray-950/80 border-t border-white/5 py-5">
+        <div className="container mx-auto px-6 flex items-center justify-between text-sm text-gray-500">
+          <Link
+            href="https://github.com/maxtmiller"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-gray-300 transition-colors"
+            aria-label="GitHub"
+          >
+            <Github className="h-5 w-5" />
+          </Link>
+          <p className="text-center text-sm text-gray-600">
+            © 2025 CS2 Vault · Not affiliated with Valve or Steam
+          </p>
+          <Link
+            href="https://steamcommunity.com/id/LowKey-W-Loki/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-gray-300 transition-colors"
+            aria-label="Steam"
+          >
+            <SteamIcon className="h-5 w-5" />
+          </Link>
+        </div>
+      </footer>
+    </div>
   );
 }

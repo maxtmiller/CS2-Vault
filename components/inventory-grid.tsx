@@ -533,10 +533,10 @@ export function InventoryGrid({
 
   return (
     <div>
-      <div className="mb-4 flex justify-between items-center">
-        <h2 className="text-xl font-bold">Results ({filteredItems.length})</h2>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 border-gray-600 p-2 rounded">
+      <div className="mb-4 flex flex-wrap justify-between items-center gap-2">
+        <h2 className="text-lg font-semibold text-gray-100">Results <span className="text-gray-500 font-normal">({filteredItems.length})</span></h2>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 p-1 rounded">
             <Button
               variant="outline"
               size="sm"
@@ -559,7 +559,7 @@ export function InventoryGrid({
                   placeholder="Enter JWT token"
                   value={jwtToken}
                   onChange={(e) => setJwtToken(e.target.value)}
-                  className="w-64 bg-gray-900 border-gray-600 text-sm"
+                  className="w-40 sm:w-60 bg-gray-900 border-gray-600 text-sm"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
                       handleReload();

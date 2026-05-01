@@ -260,62 +260,65 @@ export function LoginScreen() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 p-4 text-white">
-      <div className="mb-8 text-center">
-        <div className="flex justify-center items-center pb-4">
-          <img src="/logo.png" width="125" height="125" alt="Logo" />
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#080c16] p-4 text-white relative overflow-hidden">
+      {/* Background gradient orbs */}
+      <div className="absolute top-1/4 -left-32 w-[500px] h-[500px] bg-blue-700/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 -right-32 w-[500px] h-[500px] bg-purple-700/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-900/5 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="mb-8 text-center relative z-10">
+        <div className="flex justify-center items-center pb-5">
+          <div className="p-4 rounded-2xl bg-gray-900/60 border border-white/5 backdrop-blur-sm">
+            <img src="/logo.png" width="80" height="80" alt="Logo" />
+          </div>
         </div>
-        <h1 className="mb-2 text-4xl font-bold">CS2 Vault</h1>
-        <p className="text-gray-300">
+        <h1 className="mb-2 text-4xl font-bold bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-500 bg-clip-text text-transparent">
+          CS2 Vault
+        </h1>
+        <p className="text-gray-400">
           Your CS2 Inventory, Simplified and Enhanced.
         </p>
       </div>
 
-      <Card className="w-full max-w-md bg-gray-800 border-gray-700">
-        <CardHeader>
-          <CardTitle className="text-white">Sign In</CardTitle>
-          <CardDescription className="text-gray-400">
+      <Card className="w-full max-w-md bg-gray-900/80 border-gray-800/60 backdrop-blur-sm relative z-10">
+        <CardHeader className="pb-4">
+          <CardTitle className="text-white text-xl">Sign In</CardTitle>
+          <CardDescription className="text-gray-500">
             Choose your preferred login method
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="steam" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-gray-700">
+            <TabsList className="grid w-full grid-cols-2 bg-gray-800/60 border border-gray-700/40">
               <TabsTrigger
                 value="steam"
-                className="data-[state=active]:bg-gray-900"
+                className="data-[state=active]:bg-gray-900 data-[state=active]:text-white text-gray-400"
               >
                 Steam
               </TabsTrigger>
-              {/* <TabsTrigger value="qr" className="data-[state=active]:bg-gray-900">
-                QR Code
-              </TabsTrigger> */}
               <TabsTrigger
                 value="jwt"
-                className="data-[state=active]:bg-gray-900"
+                className="data-[state=active]:bg-gray-900 data-[state=active]:text-white text-gray-400"
               >
                 JWT Token
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="steam" className="mt-4">
-              <div className="flex justify-center">
-                <Button
-                  onClick={handleSteamOAuth}
-                  className="flex items-center text-white-100 gap-2 bg-[#0b327a] hover:bg-[#2a475e] w-full"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <SteamIcon className="h-5 w-5" />
-                  )}
-                  Sign in with Steam
-                </Button>
-              </div>
-              <p className="mt-4 text-center text-sm text-gray-400">
-                This will only accesses your public inventory, including
-                tradable items.
+            <TabsContent value="steam" className="mt-5">
+              <Button
+                onClick={handleSteamOAuth}
+                className="flex items-center gap-2 bg-[#1a56c4] hover:bg-[#1e4fa8] w-full h-11 text-white font-medium"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <SteamIcon className="h-5 w-5" />
+                )}
+                Sign in with Steam
+              </Button>
+              <p className="mt-4 text-center text-xs text-gray-500">
+                Accesses your public inventory including tradable items.
               </p>
             </TabsContent>
 
@@ -393,22 +396,24 @@ export function LoginScreen() {
               </div>
             </TabsContent>
 
-            <TabsContent value="jwt" className="mt-4">
+            <TabsContent value="jwt" className="mt-5">
               <div className="flex flex-col gap-4">
                 <div className="space-y-2">
-                  <p className="text-sm text-gray-400">
+                  <p className="text-xs text-gray-500">
                     Paste your Steam JWT token below
                   </p>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2">
                     <Input
                       type="password"
-                      placeholder="JWT Token"
+                      placeholder="Paste JWT token..."
                       value={jwtToken}
                       onChange={(e) => setJwtToken(e.target.value)}
-                      className="bg-gray-700 border-gray-600 flex-1"
+                      className="bg-gray-800/80 border-gray-700 flex-1 h-11"
+                      onKeyDown={(e) => e.key === "Enter" && handleJwtLogin()}
                     />
                     <Button
-                      className="bg-[#0a4894] hover:bg-[#2a475e] text-white h-10 w-10 flex items-center justify-center"
+                      variant="outline"
+                      className="border-gray-700 bg-gray-800/80 hover:bg-gray-700 text-white h-11 w-11 shrink-0 p-0"
                       onClick={() =>
                         window.open(
                           "https://steamcommunity.com/chat/clientjstoken",
@@ -416,13 +421,13 @@ export function LoginScreen() {
                         )
                       }
                     >
-                      <SquareArrowOutUpRight className="h-8 w-8" />
+                      <SquareArrowOutUpRight className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
                 <Button
                   onClick={handleJwtLogin}
-                  className="w-full"
+                  className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-medium"
                   disabled={isLoading || !jwtToken.trim()}
                 >
                   {isLoading ? (
@@ -437,9 +442,8 @@ export function LoginScreen() {
                     </>
                   )}
                 </Button>
-                <p className="mt-4 text-center text-sm text-gray-400">
-                  This will access your full inventory, including non-tradable
-                  items and storage units.
+                <p className="text-center text-xs text-gray-500">
+                  Accesses your full inventory including non-tradable items and storage units.
                 </p>
               </div>
             </TabsContent>

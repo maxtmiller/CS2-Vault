@@ -100,45 +100,55 @@ export function UserProfile({ steamId, currencies, selectedCurrency, setSelected
 
 
   return (
-    <div className="flex items-center space-x-4">
-      <div className="flex-grow ml-4 flex flex-col justify-center items-end">
-        <h3 className="font-medium text-white">{profile.steamName}</h3>
-        <p className="text-xs text-gray-400">{steamId}</p>
+    <div className="flex items-center gap-2 sm:gap-3">
+      {/* Name + ID — hidden on small screens */}
+      <div className="hidden sm:flex flex-col items-end justify-center">
+        <h3 className="font-medium text-white text-sm leading-tight">{profile.steamName}</h3>
+        <p className="text-xs text-gray-500 hidden md:block truncate max-w-[120px]">{steamId}</p>
       </div>
+
+      {/* Avatar */}
       <Link
         href={`https://steamcommunity.com/profiles/${steamId}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="relative h-10 w-10 overflow-hidden border-2 border-gray-500 rounded-full transition-all duration-300 hover:border-4 hover:border-blue-500"
+        className="relative h-9 w-9 overflow-hidden border-2 border-gray-700 rounded-full transition-all duration-200 hover:border-blue-500 shrink-0"
       >
         <Image
           src={profile.avatarMedium || "/placeholder.svg"}
           alt={profile.steamName}
-          width={64}
-          height={64}
+          width={36}
+          height={36}
           className="object-cover"
         />
       </Link>
+
+      {/* Currency picker */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="sm" className="">
-            <p className="mr-2 text-sm text-600-white hover:text-blue">
-              {selectedCurrency}
-            </p>
-            <ChevronDown className="h-4 w-4 text-white" />
+          <Button variant="outline" size="sm" className="border-gray-700 bg-gray-900 hover:bg-gray-800 text-white gap-1 h-9 px-2.5">
+            <span className="text-sm font-medium">{selectedCurrency}</span>
+            <ChevronDown className="h-3.5 w-3.5 text-gray-400" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" className="bg-gray-900 border-gray-700">
           {currencies.map((c) => (
-            <DropdownMenuItem key={c.code} onClick={() => handleCurrencyChange(c.code)}>
+            <DropdownMenuItem key={c.code} onClick={() => handleCurrencyChange(c.code)} className="hover:bg-gray-800">
               {c.icon}
               {c.code}
             </DropdownMenuItem>
           ))}
         </DropdownMenuContent>
       </DropdownMenu>
-      <Button onClick={handleLogout} className="bg-red-600 text-white hover:bg-red-700 rounded-full">
-          Logout
+
+      {/* Logout */}
+      <Button
+        onClick={handleLogout}
+        size="sm"
+        className="bg-red-600/90 text-white hover:bg-red-600 h-9 px-3"
+      >
+        <span className="hidden sm:inline">Logout</span>
+        <span className="sm:hidden text-xs">✕</span>
       </Button>
     </div>
   )

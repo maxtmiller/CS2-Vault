@@ -35,9 +35,24 @@
 html,
 body {
   overscroll-behavior: none;
-  background-color: #111827; /* bg-gray-900 */
+  background-color: #0a0e1a;
   color: white;
   min-height: 100vh;
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
 }
 
 @layer base {
