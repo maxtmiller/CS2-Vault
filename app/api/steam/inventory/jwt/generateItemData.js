@@ -3,81 +3,35 @@ import GlobalOffensive from 'globaloffensive';
 import CRC32 from 'crc-32';
 import protobuf from 'protobufjs';
 import path from 'path';
-import { fetchData, getFullItemData, getFullPriceData, getFullSkinData } from "@/lib/data-loader"
-import fs from 'fs';
-
-
-function findFloatRange(float) {
-
-    const floatRanges = [
-        { min: 0.00, max: 0.01 },
-        { min: 0.00, max: 0.02 },
-        { min: 0.00, max: 0.03 },
-        { min: 0.00, max: 0.04 },
-        { min: 0.00, max: 0.07 },
-        { min: 0.07, max: 0.08 },
-        { min: 0.07, max: 0.09 },
-        { min: 0.07, max: 0.10 },
-        { min: 0.07, max: 0.15 },
-        { min: 0.15, max: 0.18 },
-        { min: 0.15, max: 0.21 },
-        { min: 0.15, max: 0.24 },
-        { min: 0.15, max: 0.27 },
-        { min: 0.15, max: 0.38 },
-        { min: 0.38, max: 0.39 },
-        { min: 0.38, max: 0.40 },
-        { min: 0.38, max: 0.41 },
-        { min: 0.38, max: 0.42 },
-        { min: 0.38, max: 0.45 },
-        { min: 0.45, max: 0.50 },
-        { min: 0.45, max: 0.60 },
-        { min: 0.45, max: 0.70 },
-        { min: 0.45, max: 0.80 },
-        { min: 0.45, max: 0.90 },
-        { min: 0.45, max: 1.00 }
-    ];
-
-    for (const range of floatRanges) {
-        if (float >= range.min && float < range.max) {
-            return range;
-        }
-    }
-    return null;
-}
-
-const knifeDefIndexes = new Set([500, 503, 505, 506, 507, 508, 509, 512, 513, 514, 515, 516, 517, 518, 519, 520, 521, 522, 523, 525, 526 ]);
+import { fetchData, getFullItemData, getFullPriceData, getFullSkinData } from "@/lib/data-loader";
+import { getWearName, buildPriceTitle, buildCSFloatUrl, buildSteamMarketUrl } from './itemDataHelpers.js';
 
 
 let full_item_data;
 let full_price_data;
 let full_skin_data;
 
-let skinByWeaponPaint = new Map();
-let itemByDefIndex = new Map();
-let crateByDefIndex = new Map();
-let stickerById = new Map();
-let keychainById = new Map();
+const skinByWeaponPaint = new Map();
+const itemByDefIndex = new Map();
+const crateByDefIndex = new Map();
+const stickerById = new Map();
+const keychainById = new Map();
 
 
 function buildIndexes() {
     for (const skin of Object.values(full_skin_data)) {
-        const key = `${skin.weapon.weapon_id}:${skin.paint_index ?? 0}`;
-        skinByWeaponPaint.set(key, skin);
+        skinByWeaponPaint.set(`${skin.weapon.weapon_id}:${skin.paint_index ?? 0}`, skin);
     }
 
     for (const [key, item] of Object.entries(full_item_data)) {
-        if (key.startsWith("sticker-")) {
-            const stickerId = Number(key.split("-")[1]);
-            stickerById.set(stickerId, item);
-        } else if (key.startsWith("keychain-")) {
-            const keychainId = Number(key.split("-")[1]);
-            keychainById.set(keychainId, item);
-        } else if (key.startsWith("crate-")) {
-            const crateId = Number(key.split("-")[1]);
-            crateByDefIndex.set(crateId, item);
-        } else if (item.def_index != null && !key.startsWith("sticker_slab")) {
-            const itemId = Number(key.split("-")[1]);
-            itemByDefIndex.set(itemId, item);
+        if (key.startsWith('sticker-')) {
+            stickerById.set(Number(key.split('-')[1]), item);
+        } else if (key.startsWith('keychain-')) {
+            keychainById.set(Number(key.split('-')[1]), item);
+        } else if (key.startsWith('crate-')) {
+            crateByDefIndex.set(Number(key.split('-')[1]), item);
+        } else if (item.def_index != null && !key.startsWith('sticker_slab')) {
+            itemByDefIndex.set(Number(key.split('-')[1]), item);
         }
     }
 }
@@ -86,88 +40,64 @@ function buildIndexes() {
 let CEconItemPreviewDataBlock;
 
 async function initProto() {
-  const filePath = path.join(process.cwd(), 'public/econ.proto');
-  const root = await protobuf.load(filePath);
-  CEconItemPreviewDataBlock = root.lookupType('CEconItemPreviewDataBlock');
+    const filePath = path.join(process.cwd(), 'public/econ.proto');
+    const root = await protobuf.load(filePath);
+    CEconItemPreviewDataBlock = root.lookupType('CEconItemPreviewDataBlock');
 }
 
 
 async function generateInspectLinkFromObject(props) {
-    const previewLink = "steam://rungame/730/76561202255233023/+csgo_econ_action_preview%20";
+    const previewLink = 'steam://rungame/730/76561202255233023/+csgo_econ_action_preview%20';
 
-    function floatToBytes(floatValue) {
-        const floatArray = new Float32Array(1);
-        floatArray[0] = floatValue;
-        const byteArray = new Uint32Array(floatArray.buffer);
-        return byteArray[0];
-    }
+    const floatArray = new Float32Array(1);
+    floatArray[0] = props.paint_wear;
+    const paintwear = new Uint32Array(floatArray.buffer)[0];
 
-    async function generateHex(props) {
-        const stickers = props.stickers || [];
+    const econ = {
+        defindex: props.def_index,
+        paintindex: props.paint_index,
+        paintseed: props.paint_seed,
+        rarity: props.rarity,
+        paintwear,
+        customname: props.custom_name || '',
+        stickers: (props.stickers || []).map(s => ({
+            ...s,
+            stickerId: s.sticker_id,
+            offsetX: s.offset_x ?? 0,
+            offsetY: s.offset_y ?? 0,
+            rotation: s.rotation ?? 0,
+        })),
+    };
 
-        const econ = {
-            defindex: props.def_index,
-            paintindex: props.paint_index,
-            paintseed: props.paint_seed,
-            rarity: props.rarity,
-            paintwear: floatToBytes(props.paint_wear),
-            customname: props.custom_name || "",
-            stickers: stickers.map(sticker => ({
-                ...sticker,
-                stickerId: sticker.sticker_id,
-                offsetX: sticker.offset_x ?? 0,
-                offsetY: sticker.offset_y ?? 0,
-                rotation: sticker.rotation ?? 0,
-            })),
-        };
+    const errMsg = CEconItemPreviewDataBlock.verify(econ);
+    if (errMsg) throw new Error(errMsg);
 
-        const errMsg = CEconItemPreviewDataBlock.verify(econ);
-        if (errMsg) throw new Error(errMsg);
+    let payload = CEconItemPreviewDataBlock.encode(econ).finish();
+    payload = Buffer.concat([Uint8Array.from([0]), payload]);
 
-        let payload = CEconItemPreviewDataBlock.encode(econ).finish();
+    const crc = CRC32.buf(payload);
+    const x_crc = (crc & 0xffff) ^ (CEconItemPreviewDataBlock.encode(econ).finish().length * crc);
 
-        payload = Buffer.concat([Uint8Array.from([0]), payload]);
+    const crcBuffer = Buffer.alloc(4);
+    crcBuffer.writeUInt32BE((x_crc & 0xffffffff) >>> 0, 0);
 
-        let crc = CRC32.buf(payload);
-
-        const x_crc = (crc & 0xffff) ^ (CEconItemPreviewDataBlock.encode(econ).finish().length * crc);
-
-        const crcBuffer = Buffer.alloc(4);
-        crcBuffer.writeUInt32BE((x_crc & 0xffffffff) >>> 0, 0);
-
-        const buffer = Buffer.concat([payload, crcBuffer]);
-
-        return buffer.toString("hex").toUpperCase();
-    }
-
-    const hex = await generateHex(props);
-
+    const hex = Buffer.concat([payload, crcBuffer]).toString('hex').toUpperCase();
     return `${previewLink}${hex}`;
 }
 
 
-async function mergeJsonFiles(allFiles) {
-    return allFiles.flat();
-}
-
-
-async function mergeData(mergedData) {
+async function mergeData(items) {
     try {
-        let items = mergedData;
         const groupedItems = new Map();
 
         for (const item of items) {
             const hasPaintIndex = Object.prototype.hasOwnProperty.call(item, 'paint_index');
             const hasStickerId = Object.prototype.hasOwnProperty.call(item, 'sticker_id');
-            const isCharm = item.def_index === 1355;
-
-            const itemQty = Number.isFinite(item.quantity) && item.quantity > 0
-                ? item.quantity
-                : 1;
+            const itemQty = Number.isFinite(item.quantity) && item.quantity > 0 ? item.quantity : 1;
 
             let key;
-            if (isCharm) {
-                key = `no-paint-no-sticker-charm-${item.def_index}-${item.keychain_index}`;
+            if (item.def_index === 1355) {
+                key = `charm-${item.def_index}-${item.keychain_index}`;
             } else if (!hasPaintIndex && !hasStickerId) {
                 key = `no-paint-no-sticker-${item.def_index}`;
             } else if (!hasPaintIndex && hasStickerId) {
@@ -179,271 +109,144 @@ async function mergeData(mergedData) {
             if (groupedItems.has(key)) {
                 groupedItems.get(key).quantity += itemQty;
             } else {
-                groupedItems.set(key, {
-                    ...item,
-                    quantity: itemQty
-                });
+                groupedItems.set(key, { ...item, quantity: itemQty });
             }
         }
 
-        items = Array.from(groupedItems.values());
         console.log('Merged items saved');
-        return items;
+        return Array.from(groupedItems.values());
     } catch (error) {
         console.error('Error processing items:', error);
     }
 }
 
 
-async function getStickers(old_data) {
-    if (old_data.stickers?.length > 0) {
-        const sticker_info = [];
-        old_data.stickers.map(item => {
-            const sticker = stickerById.get(item.sticker_id);
-            if (sticker) {
-                const new_data =  {
-                    sticker_id: item.sticker_id,
-                    name: sticker.name,
-                    image: sticker.image,
-                    steam_price: full_price_data[sticker.name] ? full_price_data[sticker.name].steam.last_ever : null,
-                };
-                Object.assign(item, new_data);
-                sticker_info.push(item);
-            }
-        });
-        old_data.stickers = sticker_info
-        return old_data;
-    }
-    return old_data;
+async function getStickers(data) {
+    if (!data.stickers?.length) return data;
+
+    data.stickers = data.stickers.reduce((acc, item) => {
+        const sticker = stickerById.get(item.sticker_id);
+        if (sticker) {
+            acc.push({
+                ...item,
+                name: sticker.name,
+                image: sticker.image,
+                steam_price: full_price_data[sticker.name]?.steam.last_ever ?? null,
+            });
+        }
+        return acc;
+    }, []);
+
+    return data;
 }
 
 
-async function getItemInfoByDefIndex(old_data) {
+function lookupItem(data) {
+    if ('paint_wear' in data) return skinByWeaponPaint.get(`${data.def_index}:${data.paint_index}`);
+    if (data.sticker_id) return stickerById.get(data.sticker_id);
+    if ('keychain_index' in data) return keychainById.get(data.keychain_index);
+    if (data.rarity == 1) return crateByDefIndex.get(data.def_index);
+    return itemByDefIndex.get(data.def_index);
+}
 
-    if (old_data.def_index ===  1201 || (old_data.def_index === 36 && old_data.paint_index === 125)) return null;
 
-    let item;
-    if (old_data.def_index >= 500 && old_data.def_index <= 550 && !old_data.hasOwnProperty('paint_wear') && !old_data.hasOwnProperty('paint_index')) {
-        old_data.paint_index = 0;
-
-        item = skinByWeaponPaint.get(`${old_data.def_index}:0`);
-        if (!item) {
-            return null;
+function resolveCategory(item, customType) {
+    if (!item.type) {
+        if (item.category) return 'weapon';
+        if (item.name.split(' ')[0] === 'Charm') {
+            item.type = 'Keychain';
+            return 'charm';
         }
-        let title;
-        if (old_data.is_stattrak) {
-            title = `StatTrak™ ${item.name}`;
-        } else {
-            title = `${item.name}`;
-        }
-        const price = full_price_data[title];
-        const category = 'weapon';
-        const inspect_link = await generateInspectLinkFromObject(old_data);
-        let item_category;
-        if (old_data.is_stattrak == true) {
-            item_category = 2;
-        } else {
-            item_category = 1;
-        }
-        const CSFloat = `https://csfloat.com/search?sort_by=lowest_price&category=${item_category}&def_index=${old_data.def_index}&paint_index=0`
-        let encodedString;
-        if (old_data.is_stattrak == true) {
-            encodedString = encodeURIComponent(`StatTrak™ ${item.name}`)
-        } else {
-            encodedString = encodeURIComponent(`${item.name}`)
-        }
-        const SteamMarket = `https://steamcommunity.com/market/listings/730/${encodedString}`
-        const item_data = {
-            name: item.name+'| Vanilla',
-            rarity_name: "Covert",
-            type: "Knives",
-            category: category,
-            csfloat: CSFloat,
-            steam: SteamMarket,
-            icon_url: item.image,
-            inspect_link: inspect_link,
-            steam_price: price ? price.steam.last_ever : null,
-        }
-        return item_data;
+        return customType;
     }
+    if (item.name.split(' ')[0] === 'Sticker') return 'sticker';
+    if (item.type === 'Sticker Capsule' || item.type === 'Autograph Capsule' || item.type === 'Case') return 'container';
+    return item.type;
+}
 
-    if (old_data.hasOwnProperty('paint_wear')) {
-        item = skinByWeaponPaint.get(`${old_data.def_index}:${old_data.paint_index}`);
-    } else if (old_data.sticker_id) {
-        item = stickerById.get(old_data.sticker_id);
-    } else if (old_data.hasOwnProperty('keychain_index')) {
-        item = keychainById.get(old_data.keychain_index);
-    } else if (old_data.rarity == 1) {
-        item = crateByDefIndex.get(old_data.def_index);
-    } else {
-        item = itemByDefIndex.get(old_data.def_index);
-    }
 
-    if (!item || (item.hasOwnProperty('genuine') && !item.market_hash_name)) {
-        return null;
-    }
+async function getVanillaKnifeData(item, data) {
+    data.paint_index = 0;
+    const title = data.is_stattrak ? `StatTrak™ ${item.name}` : item.name;
+    const price = full_price_data[title];
+    const csFloatCategory = data.is_stattrak ? 2 : 1;
 
-    let price;
-    if (old_data.hasOwnProperty('paint_wear')) {
-        let title;
-        if (old_data.is_stattrak) {
-            title = `StatTrak™ ${item.name} (${old_data.wear_name})`;
-        } else if (old_data.is_souvenir) {
-            title = `Souvenir ${item.name} (${old_data.wear_name})`;
-        } else {
-            title = `${item.name} (${old_data.wear_name})`;
-        }
-        price = full_price_data[title];
-    } else {
-        price = full_price_data[item.name];
-    }
-
-    let category;
-    if (item.type) {
-        category = item.type;
-        if (item.name.split(' ')[0] === 'Sticker') {
-            category = 'sticker';
-        } else if (item.type === 'Sticker Capsule' || item.type === 'Autograph Capsule') {
-            category = 'container';
-        } 
-        if (item.type === 'Case') {
-            category = 'container';
-        }
-    } else if (item.category) {
-        category = 'weapon';
-    } else if (item.name.split(' ')[0] === 'Charm') {
-        category = 'charm';
-        item.type = 'Keychain';
-    } else {
-        const customType = item.id.split("-")[0].replace(/^./, (c) => c);
-        category = customType;
-    }
-
-    const customType = item.id.split("-")[0].replace(/^./, (c) => c.toUpperCase());
-    
-    let inspect_link;
-    if (old_data.hasOwnProperty('paint_wear')) {
-        inspect_link = await generateInspectLinkFromObject(old_data);
-    } else {
-        inspect_link = null;
-    }
-
-    let CSFloat;
-    if (old_data.hasOwnProperty('paint_wear')) {
-        let category;
-        if (old_data.is_souvenir == true) {
-            category = 3;
-        } else if (old_data.is_stattrak == true) {
-            category = 2;
-        } else {
-            category = 1;
-        }
-        const floatRange = findFloatRange(old_data.paint_wear);
-        CSFloat = `https://csfloat.com/search?sort_by=lowest_price&category=${category}&min_float=${floatRange.min}&max_float=${floatRange.max}&def_index=${old_data.def_index}&paint_index=${old_data.paint_index}`
-    } else if (old_data.sticker_id) {
-        CSFloat = `https://csfloat.com/search?sort_by=lowest_price&sticker_index=${old_data.sticker_id}`
-    } else if (old_data.keychain_index) {
-        CSFloat = `https://csfloat.com/search?sort_by=lowest_price&keychain_index=${old_data.keychain_index}`
-    } else {
-        CSFloat = `https://csfloat.com/search?sort_by=lowest_price&def_index=${old_data.def_index}`
-    }
-
-    let SteamMarket;
-    if (old_data.hasOwnProperty('paint_wear')) {
-        let encodedString;
-        if (old_data.is_souvenir == true) {
-            encodedString = encodeURIComponent(`Souvenir ${item.name} (${old_data.wear_name})`)
-                .replace(/\(/g, "%28")
-                .replace(/\)/g, "%29");
-        } else if (old_data.is_stattrak == true) {
-            encodedString = encodeURIComponent(`StatTrak™ ${item.name} (${old_data.wear_name})`)
-                .replace(/\(/g, "%28")
-                .replace(/\)/g, "%29");
-        } else {
-            encodedString = encodeURIComponent(`${item.name} (${old_data.wear_name})`)
-                .replace(/\(/g, "%28")
-                .replace(/\)/g, "%29");
-        }
-        SteamMarket = `https://steamcommunity.com/market/listings/730/${encodedString}`
-    } else {
-        const encodedString = encodeURIComponent(`${item.name}`)
-            .replace(/\(/g, "%28")
-            .replace(/\)/g, "%29");
-        SteamMarket = `https://steamcommunity.com/market/listings/730/${encodedString}`
-    }
-
-    const item_data = {
-        name: item.name,
-        rarity_name: item.hasOwnProperty('rarity') ? item.rarity.name : 'Base Grade',
-        type: item.type ?? item.category?.name ?? customType,
-        category: category,
-        csfloat: CSFloat,
-        quantity: old_data.quantity || 1,
-        steam: SteamMarket,
+    return {
+        name: `${item.name} | Vanilla`,
+        rarity_name: 'Covert',
+        type: 'Knives',
+        category: 'weapon',
+        csfloat: `https://csfloat.com/search?sort_by=lowest_price&category=${csFloatCategory}&def_index=${data.def_index}&paint_index=0`,
+        steam: `https://steamcommunity.com/market/listings/730/${encodeURIComponent(title)}`,
         icon_url: item.image,
-        inspect_link: inspect_link,
-        steam_price: price ? price.steam.last_ever : null,
-        is_tradable: old_data.is_tradable,
-    }
-
-    // if (category == "container") {
-    //     console.log(item_data);
-    // }
-
-    return item ? item_data : null;
+        inspect_link: await generateInspectLinkFromObject(data),
+        steam_price: price?.steam.last_ever ?? null,
+    };
 }
 
 
-function getWearName(float) {
+async function getItemInfoByDefIndex(data) {
+    if (data.def_index === 1201 || (data.def_index === 36 && data.paint_index === 125)) return null;
 
-    const floatRanges = [
-        { min: 0.00, max: 0.07, name: 'Factory New' },
-        { min: 0.07, max: 0.15, name: 'Minimal Wear' },
-        { min: 0.15, max: 0.38, name: 'Field-Tested' },
-        { min: 0.38, max: 0.45, name: 'Well-Worn' },
-        { min: 0.45, max: 1.00, name: 'Battle-Scarred' }
-    ];
-
-    for (const range of floatRanges) {
-        if (float >= range.min && float < range.max) {
-            return range.name;
-        }
+    // Vanilla knife: knife def_index with no paint applied
+    if (data.def_index >= 500 && data.def_index <= 550 && !('paint_wear' in data) && !('paint_index' in data)) {
+        const item = skinByWeaponPaint.get(`${data.def_index}:0`);
+        return item ? getVanillaKnifeData(item, data) : null;
     }
-    return null;
+
+    const item = lookupItem(data);
+    if (!item || ('genuine' in item && !item.market_hash_name)) return null;
+
+    const customType = item.id.split('-')[0].replace(/^./, c => c.toUpperCase());
+    const price = full_price_data[buildPriceTitle(item, data)];
+    const category = resolveCategory(item, customType);
+    const inspect_link = 'paint_wear' in data ? await generateInspectLinkFromObject(data) : null;
+
+    return {
+        name: item.name,
+        rarity_name: item.rarity?.name ?? 'Base Grade',
+        type: item.type ?? item.category?.name ?? customType,
+        category,
+        csfloat: buildCSFloatUrl(data),
+        quantity: data.quantity || 1,
+        steam: buildSteamMarketUrl(item, data),
+        icon_url: item.image,
+        inspect_link,
+        steam_price: price?.steam.last_ever ?? null,
+        is_tradable: data.is_tradable,
+    };
 }
 
 
 async function appendInfo(mergedData) {
-
     try {
         const items = mergedData;
 
         for (let i = 0; i < items.length; i++) {
-            let item = items[i];
+            const item = items[i];
 
             if (!item || (item.def_index === 4001 && item.quantity === 1) || item.origin == 9) {
-                items.splice(i, 1);
-                i--;
+                items.splice(i--, 1);
                 continue;
             }
 
-            item = await getStickers(item);
+            await getStickers(item);
             const new_data = await getItemInfoByDefIndex(item);
 
             if (new_data) {
                 Object.assign(item, new_data);
             } else {
-                items.splice(i, 1);
-                i--;
+                items.splice(i--, 1);
             }
         }
 
-        console.log("Item info appended")
+        console.log('Item info appended');
         return items;
     } catch (error) {
         console.error('Error processing items: ', error);
     }
 }
+
 
 export async function initializeCSGOInventory(authData, loginType) {
     return new Promise((resolve, reject) => {
@@ -454,10 +257,6 @@ export async function initializeCSGOInventory(authData, loginType) {
 
         client.setMaxListeners(30);
         csgo.setMaxListeners(30);
-
-        // Cleanup old listeners before adding new ones
-        // client.removeAllListeners();
-        // csgo.removeAllListeners();
 
         let steamID;
 
@@ -476,7 +275,7 @@ export async function initializeCSGOInventory(authData, loginType) {
             client.logOn({
                 accountName: authData.account_name,
                 webLogonToken: authData.token,
-                steamID: authData.steamid
+                steamID: authData.steamid,
             });
             client.once('loggedOn', () => {
                 handleLoggedOn();
@@ -488,33 +287,24 @@ export async function initializeCSGOInventory(authData, loginType) {
             console.log('Connected to CS2 Game Coordinator.');
             try {
                 await fetchData();
-
                 full_item_data = getFullItemData();
                 full_price_data = getFullPriceData();
                 full_skin_data = getFullSkinData();
                 buildIndexes();
-
                 await initProto();
 
                 if (!csgo.inventory) throw new Error('Inventory not available.');
 
                 const cleanedInventory = csgo.inventory
                     .filter(item => !item.casket_id)
-                    .map(item => mapInventoryItem(item, "Inventory"));
+                    .map(item => mapInventoryItem(item, 'Inventory'));
 
-                // Separate normal items and storage units
                 const normalItems = [];
-
                 for (const item of cleanedInventory) {
                     if (item.casket_contained_item_count) {
                         try {
-                            const contents = await getCasketItems(csgo, item);
-
-                            items_data.push(contents);
-                            storage_units.push({
-                                name: item.custom_name,
-                                count: item.casket_contained_item_count
-                            });
+                            items_data.push(await getCasketItems(csgo, item));
+                            storage_units.push({ name: item.custom_name, count: item.casket_contained_item_count });
                         } catch (err) {
                             console.error('Failed to load casket:', item.id, err.message);
                         }
@@ -522,38 +312,26 @@ export async function initializeCSGOInventory(authData, loginType) {
                         normalItems.push(item);
                     }
                 }
-                
 
                 console.log('Casket items loaded.');
-
-                // Push normal inventory items
                 items_data.push(normalItems);
-
                 console.log('Inventory data saved.');
 
                 client.logOff();
-                let mergedData = await mergeJsonFiles(items_data);
-                mergedData = await mergeData(mergedData);
+                let mergedData = await mergeData(items_data.flat());
                 mergedData = await appendInfo(mergedData);
 
-                const mergedJsonData = JSON.stringify(mergedData, null, 2);
-
-                // Cleanup listeners
                 client.removeAllListeners();
                 csgo.removeAllListeners();
+                console.log('Listeners cleaned');
 
-                console.log("Listeners cleaned")
-
-                resolve({ success: true, item_data: mergedJsonData, steamID, storage_units });
+                resolve({ success: true, item_data: JSON.stringify(mergedData, null, 2), steamID, storage_units });
 
             } catch (err) {
                 console.error('Error processing inventory:', err);
                 client.logOff();
-
-                // Cleanup listeners
                 client.removeAllListeners();
                 csgo.removeAllListeners();
-
                 reject(err);
             }
         });
@@ -562,36 +340,34 @@ export async function initializeCSGOInventory(authData, loginType) {
             console.error('Steam login error:', err);
 
             let error_details = '';
-            if (err.message === "AccessDenied") {
+            if (err.message === 'AccessDenied') {
                 error_details = 'Invalid JWT token. Please try generating a new one.';
-            } else if (err.message === "InvalidPassword") {
+            } else if (err.message === 'InvalidPassword') {
                 error_details = 'Too many API requests. Please try again later.';
-            } else if (err.message === "LoggedInElsewhere") {
+            } else if (err.message === 'LoggedInElsewhere') {
                 error_details = 'Your Steam account is logged in elsewhere. Please log out from other devices and try again.';
             }
 
-            // Cleanup listeners
             client.removeAllListeners();
             csgo.removeAllListeners();
-
-            reject({ success: false, details: `${error_details}`, item_data: [], steamID: null, storage_units: [] });
+            reject({ success: false, details: error_details, item_data: [], steamID: null, storage_units: [] });
         });
     });
 }
 
-// Helper to clean item
-function mapInventoryItem(item, location) {
 
+function mapInventoryItem(item, location) {
     const {
         def_index, stickers, paint_wear, attribute, position, level, custom_desc, quality,
         original_id, interior_item, style, in_use, equipped_state, kill_eater_score_type, kill_eater_value,
         ...rest
     } = item;
-   
-    const givenDate = new Date(item.tradable_after);
-    const now = new Date();
-    let is_tradable = true;
-    if (givenDate > now) is_tradable = false;
+
+    if (def_index === 7 && paint_wear === 0.23264546692371) console.log('Found special item:', item);
+
+    const is_tradable = item.tradable_after 
+        ? new Date(item.tradable_after) <= new Date() 
+        : true;
 
     if (def_index === 1355) {
         let value;
@@ -601,7 +377,6 @@ function mapInventoryItem(item, location) {
         } catch (error) {
             console.log(error);
         }
-        
         return { def_index, ...rest, quantity: 1, keychain_index: value || 3, location, is_tradable };
     }
 
@@ -611,55 +386,24 @@ function mapInventoryItem(item, location) {
 
     if (paint_wear) {
         const wear_name = getWearName(paint_wear);
-        if (kill_eater_score_type === 0) {
-            return { def_index, ...rest, quantity: 1, quality, paint_wear, wear_name, sttattrak_count: kill_eater_value, stickers, is_stattrak: true, is_souvenir: false, location, is_tradable };
-        }
-        if (quality === 12) {
-            return { def_index, ...rest, quantity: 1, quality, paint_wear, wear_name, sttattrak_count: kill_eater_value, stickers, is_stattrak: false, is_souvenir: true, location, is_tradable };
-        }
-        return { def_index, ...rest, quantity: 1, quality, paint_wear, wear_name, stickers, is_stattrak: false, is_souvenir: false, location, is_tradable };
+        const is_stattrak = kill_eater_score_type === 0;
+        const is_souvenir = !is_stattrak && quality === 12;
+        return {
+            def_index, ...rest, quantity: 1, quality, paint_wear, wear_name,
+            ...(is_stattrak || is_souvenir ? { sttattrak_count: kill_eater_value } : {}),
+            stickers, is_stattrak, is_souvenir, location, is_tradable,
+        };
     }
+
     return { def_index, ...rest, quantity: 1, quality, location, is_tradable };
 }
 
-// Helper to fetch casket items
+
 async function getCasketItems(csgo, item) {
     return new Promise((resolve, reject) => {
         csgo.getCasketContents(item.id, (err, items) => {
-            if (err) {
-                reject(new Error('Error fetching casket contents: ' + err));
-            } else {
-                const mapped = items.map(i => mapInventoryItem(i, item.custom_name));
-                resolve(mapped);
-            }
+            if (err) reject(new Error('Error fetching casket contents: ' + err));
+            else resolve(items.map(i => mapInventoryItem(i, item.custom_name)));
         });
     });
 }
-
-
-async function fetchCasketContentsWithRetry(csgo, casketId, retries = 3, delay = 5000) {
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      const casketContents = await Promise.race([
-        new Promise((resolve, reject) => {
-          csgo.getCasketContents(casketId, (err, contents) => {
-            if (err) return reject(err);
-            resolve(contents);
-          });
-        }),
-        new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 30000)), // custom 30s timeout
-      ]);
-
-      return casketContents;
-    } catch (err) {
-      console.warn(`Attempt ${attempt} failed: ${err.message}`);
-      if (attempt < retries) {
-        console.log(`Retrying in ${delay / 1000}s...`);
-        await new Promise(res => setTimeout(res, delay));
-      } else {
-        throw new Error(`Failed to load casket after ${retries} retries: ${err.message}`);
-      }
-    }
-  }
-}
-
