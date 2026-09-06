@@ -46,8 +46,8 @@
 <!-- end list -->
 
 ```bash
-git clone https://github.com/yourusername/CS2-Vault.git
-cd CS2-Vault
+git clone https://github.com/yourusername/CS2Vault.git
+cd CS2Vault
 ```
 
 2.  Install dependencies:
